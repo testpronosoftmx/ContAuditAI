@@ -1,61 +1,42 @@
 import { createClient } from '@/lib/supabase/server'
 import AnalisisBtn from '@/components/app/AnalisisBtn'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-const SEVERIDAD_COLOR: Record<string, string> = {
-  CRITICA: 'bg-red-500/20 text-red-400 border-red-500/30',
-  MEDIA:   'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  BAJA:    'bg-blue-500/20 text-blue-400 border-blue-500/30',
-}
-
 const TIPO_LABEL: Record<string, string> = {
-  EFOS_DETECTADO:       'EFOS Detectado',
-  PPD_SIN_CRP:          'PPD sin CRP',
-  DISCREPANCIA_BANCARIA:'Discrepancia Bancaria',
+  EFOS_DETECTADO:          'EFOS Detectado',
+  PPD_SIN_CRP:             'PPD sin CRP',
+  DISCREPANCIA_BANCARIA:   'Discrepancia Bancaria',
   CANCELACION_RETROACTIVA: 'Cancelación Retroactiva',
-  MATERIALIDAD_FALTANTE:'Materialidad Faltante',
-  VENTANA_72H:          'Ventana 72h',
+  MATERIALIDAD_FALTANTE:   'Materialidad Faltante',
+  VENTANA_72H:             'Ventana 72h',
 }
 
-function scoreColor(score: number) {
-  if (score >= 80) return 'text-green-400'
-  if (score >= 50) return 'text-yellow-400'
-  return 'text-red-400'
-}
-
-function scoreLabel(score: number) {
-  if (score >= 80) return 'Riesgo bajo'
-  if (score >= 50) return 'Riesgo medio'
-  return 'Riesgo alto'
+function scoreColor(s: number) {
+  if (s >= 80) return { text: 'text-green-400', bar: 'bg-green-500', label: 'Riesgo bajo' }
+  if (s >= 50) return { text: 'text-yellow-400', bar: 'bg-yellow-500', label: 'Riesgo medio' }
+  return { text: 'text-red-400', bar: 'bg-red-500', label: 'Riesgo alto' }
 }
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: riskData }, { data: alertas }, { count: cfdisCount }, { count: txCount }] =
+  const [{ data: riskData }, { data: historial }, { data: alertas }, { count: cfdisCount }, { count: txCount }] =
     await Promise.all([
-      supabase
-        .from('risk_scores')
-        .select('score, factores, periodo')
-        .order('periodo', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from('alertas_riesgo')
-        .select('id, tipo_alerta, severidad, descripcion, created_at')
-        .eq('estado', 'Pendiente')
-        .order('severidad', { ascending: true })
-        .order('created_at', { ascending: false })
-        .limit(50),
+      supabase.from('risk_scores').select('score, factores, periodo').order('periodo', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('risk_scores').select('score, periodo').order('periodo', { ascending: true }).limit(6),
+      supabase.from('alertas_riesgo').select('id, tipo_alerta, severidad, descripcion').eq('estado', 'Pendiente').order('severidad', { ascending: true }).limit(5),
       supabase.from('cfdi_comprobantes').select('*', { count: 'exact', head: true }),
       supabase.from('transacciones_bancarias').select('*', { count: 'exact', head: true }),
     ])
 
-  const score    = riskData?.score ?? null
-  const criticas = alertas?.filter(a => a.severidad === 'CRITICA').length ?? 0
-  const medias   = alertas?.filter(a => a.severidad === 'MEDIA').length ?? 0
+  const score    = riskData?.score != null ? Number(riskData.score) : null
+  const factores = riskData?.factores as Record<string, number> | null
+  const criticas = factores?.criticas ?? 0
+  const medias   = factores?.medias ?? 0
+  const sc       = score !== null ? scoreColor(score) : null
 
   return (
     <div className="flex flex-col gap-8">
@@ -68,62 +49,108 @@ export default async function DashboardPage() {
         <AnalisisBtn />
       </div>
 
-      {/* KPIs */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-2">
+      {/* Risk Score + KPIs */}
+      <div className="grid lg:grid-cols-3 gap-4">
+
+        {/* Score card grande */}
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
           <p className="text-xs text-gray-400 uppercase tracking-wider">Risk Score</p>
-          <p className={`text-3xl font-bold ${score !== null ? scoreColor(score) : 'text-gray-500'}`}>
-            {score !== null ? Math.round(score) : '—'}
-          </p>
-          <p className="text-xs text-gray-500">
-            {score !== null ? scoreLabel(score) : 'Ejecuta el análisis'}
-          </p>
+          <div className="flex items-end gap-3">
+            <p className={`text-6xl font-bold leading-none ${sc?.text ?? 'text-gray-500'}`}>
+              {score !== null ? Math.round(score) : '—'}
+            </p>
+            <p className="text-sm text-gray-400 mb-1">/100</p>
+          </div>
+          {score !== null && (
+            <>
+              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${sc!.bar}`}
+                  style={{ width: `${score}%` }}
+                />
+              </div>
+              <p className={`text-sm font-medium ${sc!.text}`}>{sc!.label}</p>
+            </>
+          )}
+          {score === null && (
+            <p className="text-xs text-gray-500">Ejecuta el análisis para calcular</p>
+          )}
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-2">
-          <p className="text-xs text-gray-400 uppercase tracking-wider">CFDIs</p>
-          <p className="text-3xl font-bold text-white">{cfdisCount ?? 0}</p>
-          <p className="text-xs text-gray-500">Comprobantes cargados</p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-2">
-          <p className="text-xs text-gray-400 uppercase tracking-wider">Alertas críticas</p>
-          <p className={`text-3xl font-bold ${criticas > 0 ? 'text-red-400' : 'text-white'}`}>{criticas}</p>
-          <p className="text-xs text-gray-500">Requieren acción inmediata</p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-2">
-          <p className="text-xs text-gray-400 uppercase tracking-wider">Alertas medias</p>
-          <p className={`text-3xl font-bold ${medias > 0 ? 'text-yellow-400' : 'text-white'}`}>{medias}</p>
-          <p className="text-xs text-gray-500">Revisar a la brevedad</p>
+
+        {/* KPIs secundarios */}
+        <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+          {[
+            { label: 'CFDIs cargados',   value: cfdisCount ?? 0,  color: 'text-white'      },
+            { label: 'Mov. bancarios',    value: txCount    ?? 0,  color: 'text-white'      },
+            { label: 'Alertas críticas',  value: criticas,          color: criticas > 0 ? 'text-red-400'    : 'text-white' },
+            { label: 'Alertas medias',    value: medias,            color: medias   > 0 ? 'text-yellow-400' : 'text-white' },
+          ].map(k => (
+            <div key={k.label} className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-1">
+              <p className="text-xs text-gray-400 uppercase tracking-wider">{k.label}</p>
+              <p className={`text-3xl font-bold ${k.color}`}>{k.value}</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Alertas */}
+      {/* Historial de scores (si hay más de 1 mes) */}
+      {(historial?.length ?? 0) > 1 && (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
+          <h2 className="font-semibold text-sm">Evolución del Risk Score</h2>
+          <div className="flex items-end gap-3 h-20">
+            {historial!.map(h => {
+              const s = Number(h.score)
+              const col = s >= 80 ? 'bg-green-500' : s >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+              return (
+                <div key={h.periodo} className="flex flex-col items-center gap-1 flex-1">
+                  <span className="text-xs text-gray-400">{Math.round(s)}</span>
+                  <div className={`w-full rounded-t ${col}`} style={{ height: `${s}%` }} />
+                  <span className="text-xs text-gray-500">
+                    {new Date(h.periodo).toLocaleDateString('es-MX', { month: 'short' })}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Alertas recientes */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
-        <h2 className="font-semibold">
-          Alertas pendientes
-          {(alertas?.length ?? 0) > 0 && (
-            <span className="ml-2 text-xs text-gray-400 font-normal">{alertas!.length} total</span>
-          )}
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Alertas recientes</h2>
+          <Link href="/app/alertas" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+            Ver todas →
+          </Link>
+        </div>
 
         {(alertas?.length ?? 0) === 0 ? (
           <p className="text-sm text-gray-500">
-            {score === null
-              ? 'Importa tus CFDIs y estados de cuenta, luego ejecuta el análisis.'
-              : 'Sin alertas pendientes. ¡Excelente postura fiscal!'}
+            {score === null ? 'Ejecuta el análisis para detectar alertas.' : '¡Sin alertas pendientes!'}
           </p>
         ) : (
           <div className="flex flex-col gap-2">
             {alertas!.map(a => (
-              <div key={a.id} className={`rounded-xl border px-4 py-3 flex gap-3 items-start ${SEVERIDAD_COLOR[a.severidad]}`}>
-                <span className="text-xs font-bold mt-0.5 shrink-0 uppercase tracking-wide">
-                  {a.severidad}
-                </span>
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-xs font-semibold">{TIPO_LABEL[a.tipo_alerta] ?? a.tipo_alerta}</span>
-                  <span className="text-xs opacity-80 truncate">{a.descripcion}</span>
+              <div key={a.id} className={`rounded-xl border px-4 py-3 flex gap-3 items-center ${
+                a.severidad === 'CRITICA' ? 'border-red-500/30 bg-red-500/10' :
+                a.severidad === 'MEDIA'   ? 'border-yellow-500/30 bg-yellow-500/10' :
+                'border-blue-500/30 bg-blue-500/10'
+              }`}>
+                <span className={`text-xs font-bold shrink-0 uppercase ${
+                  a.severidad === 'CRITICA' ? 'text-red-400' :
+                  a.severidad === 'MEDIA'   ? 'text-yellow-400' : 'text-blue-400'
+                }`}>{a.severidad}</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-semibold text-white">{TIPO_LABEL[a.tipo_alerta] ?? a.tipo_alerta}</span>
+                  <span className="text-xs text-gray-400 truncate">{a.descripcion}</span>
                 </div>
               </div>
             ))}
+            {(factores?.criticas ?? 0) + (factores?.medias ?? 0) > 5 && (
+              <Link href="/app/alertas" className="text-xs text-center text-indigo-400 hover:text-indigo-300 py-2">
+                Ver {((factores?.criticas ?? 0) + (factores?.medias ?? 0)) - 5} alertas más →
+              </Link>
+            )}
           </div>
         )}
       </div>
