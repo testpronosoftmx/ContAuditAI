@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
+        db: { schema: 'contauditai' },
         cookies: {
           getAll() { return cookieStore.getAll() },
           setAll(cookiesToSet) {
@@ -26,7 +27,16 @@ export async function GET(request: NextRequest) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+      // Checar si el usuario ya tiene un tenant asignado
+      const { data: tenantUser } = await supabase
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('activo', true)
+        .limit(1)
+        .maybeSingle()
+
+      const destination = tenantUser ? next : '/app/onboarding'
+      return NextResponse.redirect(`${origin}${destination}`)
     }
   }
 

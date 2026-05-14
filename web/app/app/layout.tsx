@@ -15,6 +15,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect('/login')
 
+  // Si no tiene tenant asignado, enviar a onboarding
+  const { data: tenantUser } = await supabase
+    .from('tenant_users')
+    .select('tenant_id')
+    .eq('activo', true)
+    .limit(1)
+    .maybeSingle()
+
+  if (!tenantUser) redirect('/app/onboarding')
+
   return (
     <div className="min-h-screen bg-gray-950 text-white flex">
       {/* Sidebar */}
