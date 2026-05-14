@@ -70,7 +70,7 @@ CREATE INDEX idx_tenant_users_user ON contauditai.tenant_users(user_id);
 
 -- ─── CFDI Comprobantes (particionada por año) ─────────────────
 CREATE TABLE cfdi_comprobantes (
-  uuid                 UUID             PRIMARY KEY,
+  uuid                 UUID             NOT NULL,
   tenant_id            UUID             NOT NULL REFERENCES contauditai.tenants(id) ON DELETE CASCADE,
   rfc_emisor           VARCHAR(13)      NOT NULL,
   rfc_receptor         VARCHAR(13)      NOT NULL,
@@ -83,7 +83,8 @@ CREATE TABLE cfdi_comprobantes (
   estado_sat           estado_sat_tipo  NOT NULL DEFAULT 'Vigente',
   fecha_validacion_sat TIMESTAMPTZ,
   xml_url              TEXT,
-  created_at           TIMESTAMPTZ      NOT NULL DEFAULT NOW()
+  created_at           TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (uuid, fecha_emision)   -- fecha_emision requerida por el particionamiento
 ) PARTITION BY RANGE (fecha_emision);
 
 CREATE TABLE cfdi_comprobantes_2025 PARTITION OF contauditai.cfdi_comprobantes
