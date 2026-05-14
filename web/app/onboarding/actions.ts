@@ -28,7 +28,7 @@ export async function crearTenant(_prevState: { error: string }, formData: FormD
     if (tenantError.code === '23505') {
       return { error: 'Este RFC ya tiene una cuenta registrada.' }
     }
-    return { error: 'Error al crear la empresa. Intenta de nuevo.' }
+    return { error: `[DEBUG] ${tenantError.code}: ${tenantError.message}` }
   }
 
   // Asignar usuario como admin del tenant recién creado
