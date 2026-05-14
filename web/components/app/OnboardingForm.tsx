@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { crearTenant } from '@/app/app/onboarding/actions'
 
-const initialState = { error: '' }
+const initialState: { error: string } = { error: '' }
 
 export default function OnboardingForm() {
   const [state, formAction, pending] = useActionState(crearTenant, initialState)

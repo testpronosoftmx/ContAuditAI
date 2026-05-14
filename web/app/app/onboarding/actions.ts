@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 
 const RFC_REGEX = /^[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}$/
 
-export async function crearTenant(formData: FormData) {
+export async function crearTenant(_prevState: { error: string }, formData: FormData) {
   const rfc = (formData.get('rfc') as string ?? '').trim().toUpperCase()
 
   if (!RFC_REGEX.test(rfc)) {
