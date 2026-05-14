@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         .limit(1)
         .maybeSingle()
 
-      const destination = tenantUser ? next : '/app/onboarding'
+      const destination = tenantUser ? next : '/onboarding'
       return NextResponse.redirect(`${origin}${destination}`)
     }
   }

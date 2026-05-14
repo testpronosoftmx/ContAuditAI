@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
-import { crearTenant } from '@/app/app/onboarding/actions'
+import { crearTenant } from '@/app/onboarding/actions'
 
 const initialState: { error: string } = { error: '' }
 

@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .limit(1)
     .maybeSingle()
 
-  if (!tenantUser) redirect('/app/onboarding')
+  if (!tenantUser) redirect('/onboarding')
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex">
