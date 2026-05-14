@@ -25,8 +25,21 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error && sessionData.session) {
+      const { user } = sessionData.session
+
+      // Upsert silencioso del perfil — solo usuarios reales quedan en la tabla.
+      // Primera vez: crea la fila. Logins siguientes: actualiza sin duplicar.
+      await supabase.from('profiles').upsert(
+        {
+          id: user.id,
+          nombre_completo: user.user_metadata?.full_name ?? null,
+          avatar_url: user.user_metadata?.avatar_url ?? null,
+        },
+        { onConflict: 'id' }
+      )
+
       // Checar si el usuario ya tiene un tenant asignado
       const { data: tenantUser } = await supabase
         .from('tenant_users')
