@@ -17,27 +17,19 @@ export async function crearTenant(_prevState: { error: string }, formData: FormD
 
   if (!user) redirect('/login')
 
-  // Crear tenant — el nombre se actualiza al subir el primer CFDI
-  const { data: tenant, error: tenantError } = await supabase
-    .from('tenants')
-    .insert({ rfc_empresa: rfc, nombre: rfc })
-    .select('id')
-    .single()
+  const { error: rpcError } = await supabase.rpc('crear_tenant_inicial', {
+    p_rfc: rfc,
+    p_nombre: rfc,
+  })
 
-  if (tenantError) {
-    if (tenantError.code === '23505') {
+  if (rpcError) {
+    if (rpcError.message.includes('ya tiene un tenant')) {
+      return { error: 'Este usuario ya tiene una empresa configurada.' }
+    }
+    if (rpcError.code === '23505') {
       return { error: 'Este RFC ya tiene una cuenta registrada.' }
     }
-    return { error: `[DEBUG] ${tenantError.code}: ${tenantError.message}` }
-  }
-
-  // Asignar usuario como admin del tenant recién creado
-  const { error: userError } = await supabase
-    .from('tenant_users')
-    .insert({ tenant_id: tenant.id, user_id: user.id, rol: 'admin' })
-
-  if (userError) {
-    return { error: 'Error al configurar tu cuenta. Intenta de nuevo.' }
+    return { error: 'Error al crear la empresa. Intenta de nuevo.' }
   }
 
   redirect('/app/dashboard')
