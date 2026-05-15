@@ -73,10 +73,7 @@ export default async function DashboardPage() {
   const cfdiTipoData    = Array.from(tipoMap.entries()).map(([name, v]) => ({ name, value: v.count, monto: v.monto }))
   const cfdiMensualData = Array.from(mensualMap.entries()).map(([mes, v]) => ({ mes, ...v }))
 
-  const SEV_ORDER: Record<string, number> = { CRITICA: 0, MEDIA: 1, BAJA: 2 }
-  const alertas = (alertas_raw ?? [])
-    .sort((a, b) => (SEV_ORDER[a.severidad] ?? 9) - (SEV_ORDER[b.severidad] ?? 9))
-    .slice(0, 5)
+  const alertas = (alertas_raw ?? []).slice(0, 5)
 
   const score    = riskData?.score != null ? Number(riskData.score) : null
   const factores = riskData?.factores as Record<string, number> | null

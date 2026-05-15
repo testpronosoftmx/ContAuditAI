@@ -11,7 +11,22 @@ const BANCOS = ['BBVA', 'Banorte', 'HSBC', 'Santander', 'Banamex', 'Scotiabank',
 export default function BancoUpload() {
   const [state, action, pending] = useActionState(subirBanco, init)
   const inputRef = useRef<HTMLInputElement>(null)
-  const [filename, setFilename] = useState('')
+  const [filename, setFilename]   = useState('')
+  const [dragging, setDragging]   = useState(false)
+
+  function setFile(files: FileList) {
+    if (!files.length) return
+    const dt = new DataTransfer()
+    dt.items.add(files[0])
+    if (inputRef.current) inputRef.current.files = dt.files
+    setFilename(files[0].name)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    setFile(e.dataTransfer.files)
+  }
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -53,16 +68,24 @@ export default function BancoUpload() {
       />
       <div
         onClick={() => inputRef.current?.click()}
-        className="rounded-2xl border border-dashed border-white/20 p-10 flex flex-col
-                   items-center gap-3 text-center cursor-pointer hover:border-indigo-500
-                   hover:bg-white/5 transition-colors"
+        onDragOver={e => { e.preventDefault(); setDragging(true) }}
+        onDragEnter={e => { e.preventDefault(); setDragging(true) }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+        className={`rounded-2xl border border-dashed p-10 flex flex-col items-center gap-3
+                    text-center cursor-pointer transition-colors
+                    ${dragging
+                      ? 'border-indigo-400 bg-indigo-500/10'
+                      : 'border-white/20 hover:border-indigo-500 hover:bg-white/5'}`}
       >
-        <span className="text-4xl">🏦</span>
+        <span className="text-4xl">{dragging ? '📥' : '🏦'}</span>
         {filename ? (
           <p className="font-medium text-indigo-400">{filename}</p>
+        ) : dragging ? (
+          <p className="font-medium text-indigo-400">Suelta el archivo aquí</p>
         ) : (
           <>
-            <p className="font-medium">Sube tu estado de cuenta en CSV</p>
+            <p className="font-medium">Arrastra tu CSV aquí o haz clic para seleccionar</p>
             <p className="text-sm text-gray-500">Columnas: Fecha, Concepto, Referencia, Cargo, Abono, Saldo</p>
           </>
         )}
