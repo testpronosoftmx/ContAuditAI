@@ -216,6 +216,18 @@ export default function AlertaItem({ alerta }: { alerta: Alerta }) {
               </div>
             )}
 
+            {/* Vault shortcut para alertas con UUID */}
+            {alerta.uuid_referencia && alerta.estado === 'Pendiente' && (
+              <a
+                href={`/app/vault?uuid=${alerta.uuid_referencia}`}
+                className="flex items-center justify-center gap-2 rounded-lg border border-indigo-500/30
+                           bg-indigo-500/10 py-2.5 text-sm text-indigo-300
+                           hover:bg-indigo-500/20 transition-colors"
+              >
+                📎 Adjuntar evidencia en Vault
+              </a>
+            )}
+
             {/* Acciones */}
             {alerta.estado === 'Pendiente' && (
               <div className="flex gap-2 pt-1 border-t border-white/10">
