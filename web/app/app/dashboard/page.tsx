@@ -14,6 +14,12 @@ const TIPO_LABEL: Record<string, string> = {
   CANCELACION_RETROACTIVA: 'Cancelación Retroactiva',
   MATERIALIDAD_FALTANTE:   'Materialidad Faltante',
   VENTANA_72H:             'Ventana 72h',
+  INGRESO_NO_FACTURADO:    'Ingreso No Facturado',
+  FACTURA_VENCIDA:         'Factura Vencida',
+}
+
+const TIPO_NOMBRE: Record<string, string> = {
+  I: 'Ingreso', E: 'Egreso', P: 'Pago', N: 'Nómina', T: 'Traslado',
 }
 
 function scoreColor(s: number) {
@@ -36,10 +42,7 @@ export default async function DashboardPage() {
       supabase.from('cfdi_comprobantes').select('tipo_comprobante, total, fecha_emision'),
     ])
 
-  // --- Agrupación para gráficas ---
-  const TIPO_NOMBRE: Record<string, string> = { I: 'Ingreso', E: 'Egreso', P: 'Pago', N: 'Nómina', T: 'Traslado' }
-
-  const tipoMap = new Map<string, { count: number; monto: number }>()
+  const tipoMap    = new Map<string, { count: number; monto: number }>()
   const mensualMap = new Map<string, { ingreso: number; egreso: number }>()
 
   for (const c of cfdiRaw ?? []) {
@@ -51,20 +54,21 @@ export default async function DashboardPage() {
     const mes = new Date(c.fecha_emision).toLocaleDateString('es-MX', { month: 'short', year: '2-digit' })
     const m = mensualMap.get(mes) ?? { ingreso: 0, egreso: 0 }
     if (c.tipo_comprobante === 'I') mensualMap.set(mes, { ...m, ingreso: m.ingreso + monto })
-    if (c.tipo_comprobante === 'E') mensualMap.set(mes, { ...m, egreso: m.egreso + monto })
+    if (c.tipo_comprobante === 'E') mensualMap.set(mes, { ...m, egreso:  m.egreso  + monto })
   }
 
-  const cfdiTipoData = Array.from(tipoMap.entries()).map(([name, v]) => ({ name, value: v.count, monto: v.monto }))
+  const cfdiTipoData    = Array.from(tipoMap.entries()).map(([name, v]) => ({ name, value: v.count, monto: v.monto }))
   const cfdiMensualData = Array.from(mensualMap.entries()).map(([mes, v]) => ({ mes, ...v }))
 
   const score    = riskData?.score != null ? Number(riskData.score) : null
   const factores = riskData?.factores as Record<string, number> | null
   const criticas = factores?.criticas ?? 0
-  const medias   = factores?.medias ?? 0
+  const medias   = factores?.medias   ?? 0
   const sc       = score !== null ? scoreColor(score) : null
 
   return (
     <div className="flex flex-col gap-8">
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -76,8 +80,6 @@ export default async function DashboardPage() {
 
       {/* Risk Score + KPIs */}
       <div className="grid lg:grid-cols-3 gap-4">
-
-        {/* Score card grande */}
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
           <p className="text-xs text-gray-400 uppercase tracking-wider">Risk Score</p>
           <div className="flex items-end gap-3">
@@ -89,10 +91,7 @@ export default async function DashboardPage() {
           {score !== null && (
             <>
               <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${sc!.bar}`}
-                  style={{ width: `${score}%` }}
-                />
+                <div className={`h-full rounded-full transition-all ${sc!.bar}`} style={{ width: `${score}%` }} />
               </div>
               <p className={`text-sm font-medium ${sc!.text}`}>{sc!.label}</p>
             </>
@@ -102,13 +101,12 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* KPIs secundarios */}
         <div className="lg:col-span-2 grid grid-cols-2 gap-4">
           {[
-            { label: 'CFDIs cargados',   value: cfdisCount ?? 0,  color: 'text-white'      },
-            { label: 'Mov. bancarios',    value: txCount    ?? 0,  color: 'text-white'      },
-            { label: 'Alertas críticas',  value: criticas,          color: criticas > 0 ? 'text-red-400'    : 'text-white' },
-            { label: 'Alertas medias',    value: medias,            color: medias   > 0 ? 'text-yellow-400' : 'text-white' },
+            { label: 'CFDIs cargados',  value: cfdisCount ?? 0, color: 'text-white' },
+            { label: 'Mov. bancarios',  value: txCount    ?? 0, color: 'text-white' },
+            { label: 'Alertas críticas', value: criticas, color: criticas > 0 ? 'text-red-400'    : 'text-white' },
+            { label: 'Alertas medias',   value: medias,   color: medias   > 0 ? 'text-yellow-400' : 'text-white' },
           ].map(k => (
             <div key={k.label} className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-1">
               <p className="text-xs text-gray-400 uppercase tracking-wider">{k.label}</p>
@@ -132,7 +130,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Historial de scores (si hay más de 1 mes) */}
+      {/* Historial de scores */}
       {(historial?.length ?? 0) > 1 && (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
           <div className="flex items-center justify-between">
@@ -145,7 +143,7 @@ export default async function DashboardPage() {
           </div>
           <RiskScoreChart
             data={historial!.map(h => ({
-              mes: new Date(h.periodo).toLocaleDateString('es-MX', { month: 'short', year: '2-digit' }),
+              mes:   new Date(h.periodo).toLocaleDateString('es-MX', { month: 'short', year: '2-digit' }),
               score: Number(h.score),
             }))}
           />
@@ -183,14 +181,15 @@ export default async function DashboardPage() {
                 </div>
               </div>
             ))}
-            {(factores?.criticas ?? 0) + (factores?.medias ?? 0) > 5 && (
+            {(criticas + medias) > 5 && (
               <Link href="/app/alertas" className="text-xs text-center text-indigo-400 hover:text-indigo-300 py-2">
-                Ver {((factores?.criticas ?? 0) + (factores?.medias ?? 0)) - 5} alertas más →
+                Ver {(criticas + medias) - 5} alertas más →
               </Link>
             )}
           </div>
         )}
       </div>
+
     </div>
   )
 }
