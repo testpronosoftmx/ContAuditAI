@@ -45,6 +45,71 @@ function parseCSV(text: string): TxRow[] {
   return rows
 }
 
+async function parsePDF(buffer: Buffer): Promise<TxRow[]> {
+  // Dynamic import to avoid Next.js bundling issues with pdf-parse
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pdfParse = require('pdf-parse/lib/pdf-parse') as (buf: Buffer) => Promise<{ text: string }>
+  const { text } = await pdfParse(buffer)
+
+  const rows: TxRow[] = []
+  // Find lines containing a date pattern YYYY-MM-DD
+  const dateRe  = /(\d{4}-\d{2}-\d{2})/
+  // Match currency values like $16,217.20 or 16217.20
+  const moneyRe = /\$?([\d,]+\.\d{2})/g
+
+  for (const line of text.split('\n')) {
+    const dateMatch = line.match(dateRe)
+    if (!dateMatch) continue
+
+    const fecha = dateMatch[1]
+
+    // Extract all money amounts on this line
+    const amounts: number[] = []
+    let m: RegExpExecArray | null
+    moneyRe.lastIndex = 0
+    while ((m = moneyRe.exec(line)) !== null) {
+      amounts.push(parseFloat(m[1].replace(/,/g, '')))
+    }
+
+    // The last amount is always Saldo — ignore it
+    // Remaining: could be [cargo] or [abono] or [cargo, abono] — unlikely both
+    // Strategy: look for CARGO or ABONO keywords, or infer from position in text
+    const isCargo = /CARGO|PAGO|RETIRO|COMISION/i.test(line)
+    const isAbono = /ABONO|DEPOSITO|SPEI IN|TRANSFERENCIA/i.test(line)
+
+    let monto = 0
+    let tipo: 'Ingreso' | 'Egreso' = 'Ingreso'
+
+    if (amounts.length >= 2) {
+      // amounts: [...txAmount, saldo] — take second-to-last as tx amount
+      monto = amounts[amounts.length - 2]
+      tipo  = isCargo ? 'Egreso' : 'Ingreso'
+    } else if (amounts.length === 1) {
+      // Only saldo — skip (no tx amount)
+      continue
+    }
+
+    if (!monto || monto <= 0) continue
+
+    // Extract concepto: text between date and first $ amount
+    const afterDate  = line.slice(line.indexOf(fecha) + fecha.length).trim()
+    const firstDolar = afterDate.search(/\$?[\d,]+\.\d{2}/)
+    const concepto   = firstDolar > 0 ? afterDate.slice(0, firstDolar).trim() : afterDate.slice(0, 40).trim()
+    // Concepto may contain the row number at the start — strip leading digits
+    const conceptoClean = concepto.replace(/^\d+\s*/, '').trim()
+
+    rows.push({
+      fecha_operacion: `${fecha}T12:00:00`,
+      monto: String(monto),
+      tipo,
+      concepto_bancario: conceptoClean || 'Movimiento bancario',
+      clave_rastreo: '',
+    })
+  }
+
+  return rows
+}
+
 export async function reinicializarBanco(): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase.rpc('reinicializar_banco')
@@ -64,10 +129,18 @@ export async function subirBanco(
 
   if (!archivo) return { error: 'No seleccionaste ningún archivo.' }
 
-  const texto = await archivo.text()
-  const rows  = parseCSV(texto)
+  const nombre = archivo.name.toLowerCase()
+  let rows: TxRow[]
 
-  if (!rows.length) return { error: 'No se encontraron movimientos en el CSV.' }
+  if (nombre.endsWith('.pdf')) {
+    const buf = Buffer.from(await archivo.arrayBuffer())
+    rows = await parsePDF(buf)
+    if (!rows.length) return { error: 'No se pudieron extraer movimientos del PDF. Verifica que sea un estado de cuenta de ContAuditAI.' }
+  } else {
+    const texto = await archivo.text()
+    rows = parseCSV(texto)
+    if (!rows.length) return { error: 'No se encontraron movimientos en el CSV.' }
+  }
 
   const supabase = await createClient()
   const { data: insertados, error: rpcError } = await supabase.rpc(

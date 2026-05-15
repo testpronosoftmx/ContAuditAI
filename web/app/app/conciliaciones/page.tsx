@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import ConciliacionRow from '@/components/app/ConciliacionRow'
 
 export const dynamic = 'force-dynamic'
 
@@ -93,50 +94,26 @@ export default async function ConciliacionesPage() {
             </thead>
             <tbody>
               {(cons ?? []).map(c => {
-                const cfdi = cfdiMap.get(c.cfdi_uuid)
-                const tx = (Array.isArray(c.tx) ? c.tx[0] : c.tx) as { fecha_operacion: string; concepto_bancario: string; clave_rastreo: string; monto: number } | null
-                const totalCfdi = cfdi ? Number(cfdi.total) : 0
-                const montoBanco = tx ? Number(tx.monto) : Number(c.monto_aplicado)
-                const diferencia = Math.abs(totalCfdi - montoBanco)
-
+                const cfdi     = cfdiMap.get(c.cfdi_uuid)
+                const tx       = (Array.isArray(c.tx) ? c.tx[0] : c.tx) as { fecha_operacion: string; concepto_bancario: string; clave_rastreo: string; monto: number } | null
+                const cfdiTotal = cfdi ? Number(cfdi.total) : 0
+                const txMonto   = tx ? Number(tx.monto) : Number(c.monto_aplicado)
                 return (
-                  <tr key={c.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-indigo-300">
-                      {c.cfdi_uuid.slice(0, 8).toUpperCase()}
-                    </td>
-                    <td className="px-4 py-3 text-gray-300 text-xs">
-                      {cfdi ? new Date(cfdi.fecha_emision).toLocaleDateString('es-MX') : '—'}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-400">
-                      {cfdi?.rfc_emisor ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-gray-200">
-                      {totalCfdi.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
-                    </td>
-                    <td className="px-4 py-3 text-gray-300 text-xs">
-                      {tx ? new Date(tx.fecha_operacion).toLocaleDateString('es-MX') : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs max-w-[180px] truncate">
-                      {tx?.concepto_bancario ?? tx?.clave_rastreo ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-green-400">
-                      {montoBanco.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
-                    </td>
-                    <td className={`px-4 py-3 text-right tabular-nums text-xs ${diferencia > 0.5 ? 'text-yellow-400' : 'text-gray-500'}`}>
-                      {diferencia > 0.5
-                        ? diferencia.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
-                        : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        c.confianza === 'ALTA'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {c.confianza}
-                      </span>
-                    </td>
-                  </tr>
+                  <ConciliacionRow
+                    key={c.id}
+                    id={c.id}
+                    cfdi_uuid={c.cfdi_uuid}
+                    monto_aplicado={Number(c.monto_aplicado)}
+                    confianza={c.confianza}
+                    cfdi_fecha={cfdi?.fecha_emision ?? null}
+                    cfdi_rfc_emisor={cfdi?.rfc_emisor ?? null}
+                    cfdi_rfc_receptor={cfdi?.rfc_receptor ?? null}
+                    cfdi_total={cfdiTotal}
+                    tx_fecha={tx?.fecha_operacion ?? null}
+                    tx_concepto={tx?.concepto_bancario ?? null}
+                    tx_rastreo={tx?.clave_rastreo ?? null}
+                    tx_monto={txMonto}
+                  />
                 )
               })}
             </tbody>

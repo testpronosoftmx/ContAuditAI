@@ -62,7 +62,7 @@ export default function BancoUpload() {
         ref={inputRef}
         type="file"
         name="csv"
-        accept=".csv"
+        accept=".csv,.pdf"
         className="hidden"
         onChange={e => setFilename(e.target.files?.[0]?.name ?? '')}
       />
@@ -85,8 +85,8 @@ export default function BancoUpload() {
           <p className="font-medium text-indigo-400">Suelta el archivo aquí</p>
         ) : (
           <>
-            <p className="font-medium">Arrastra tu CSV aquí o haz clic para seleccionar</p>
-            <p className="text-sm text-gray-500">Columnas: Fecha, Concepto, Referencia, Cargo, Abono, Saldo</p>
+            <p className="font-medium">Arrastra tu estado de cuenta o haz clic para seleccionar</p>
+            <p className="text-sm text-gray-500">CSV · PDF — Columnas: Fecha, Concepto, Referencia, Cargo, Abono, Saldo</p>
           </>
         )}
       </div>
