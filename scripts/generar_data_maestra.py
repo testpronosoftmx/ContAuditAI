@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 
 # Configuración de Empresa Demo
-USER_RFC = "DEMO123456XYZ"
+USER_RFC = "ABCD123456ABC"
 USER_NOMBRE = "EMPRESA DEMO SA DE CV"
 import glob
 
@@ -158,7 +158,7 @@ for i in range(3):
         'Abono': monto, 
         'Cargo': 0
     })
-generate_xml(USER_RFC, USER_NOMBRE, "CLI-001", "CLIENTE MOROSO", 30000.00, datetime(2026, 3, 15), "V-MOROSO", "PUE")
+generate_xml(USER_RFC, USER_NOMBRE, "CLI001", "CLIENTE MOROSO", 30000.00, datetime(2026, 1, 15), "V-MOROSO", "PUE")
 
 # --- FINALIZAR BANCO ---
 movimientos_banco.sort(key=lambda x: x['Fecha'])
