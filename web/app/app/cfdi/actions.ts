@@ -13,6 +13,9 @@ type CfdiRow = {
   subtotal: string
   iva: string
   total: string
+  concepto: string
+  isr_retenido: string
+  iva_retenido: string
 }
 
 type CrpRow = {
@@ -46,11 +49,17 @@ function parseCFDI(xml: string): { cfdi: CfdiRow; crp?: Omit<CrpRow, 'tenant_id'
     const subtotal = attr(xml, 'SubTotal')
     const total    = attr(xml, 'Total')
     const iva      = attr(xml, 'TotalImpuestosTrasladados') || '0'
+    const isrRet   = attr(xml, 'TotalImpuestosRetenidos') || '0'
 
-    const emisorMatch   = xml.match(/<cfdi:Emisor[^>]*Rfc="([^"]+)"/i)
-    const receptorMatch = xml.match(/<cfdi:Receptor[^>]*Rfc="([^"]+)"/i)
-    const rfcEmisor   = emisorMatch?.[1] ?? ''
+    const emisorMatch    = xml.match(/<cfdi:Emisor[^>]*Rfc="([^"]+)"/i)
+    const receptorMatch  = xml.match(/<cfdi:Receptor[^>]*Rfc="([^"]+)"/i)
+    const conceptoMatch  = xml.match(/<cfdi:Concepto[^>]*Descripcion="([^"]+)"/i)
+    const ivaRetMatch    = xml.match(/<cfdi:Retencion[^>]*Impuesto="002"[^>]*Importe="([^"]+)"/i)
+
+    const rfcEmisor   = emisorMatch?.[1]   ?? ''
     const rfcReceptor = receptorMatch?.[1] ?? ''
+    const concepto    = conceptoMatch?.[1] ?? ''
+    const ivaRetenido = ivaRetMatch?.[1]   ?? '0'
 
     if (!uuid || !fecha || !tipo || !rfcEmisor || !rfcReceptor) return null
 
@@ -58,6 +67,7 @@ function parseCFDI(xml: string): { cfdi: CfdiRow; crp?: Omit<CrpRow, 'tenant_id'
       uuid, rfc_emisor: rfcEmisor, rfc_receptor: rfcReceptor,
       fecha_emision: fecha, tipo_comprobante: tipo,
       metodo_pago: metodo, subtotal, iva, total,
+      concepto, isr_retenido: isrRet, iva_retenido: ivaRetenido,
     }
 
     // Para tipo P: extraer UUID de la factura relacionada via cfdi:CfdiRelacionado

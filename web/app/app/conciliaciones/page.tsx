@@ -26,7 +26,7 @@ export default async function ConciliacionesPage() {
   const { data: cfdis } = uuids.length
     ? await supabase
         .from('cfdi_comprobantes')
-        .select('uuid, fecha_emision, rfc_emisor, rfc_receptor, total')
+        .select('uuid, fecha_emision, rfc_emisor, rfc_receptor, total, concepto')
         .in('uuid', uuids)
     : { data: [] }
 
@@ -109,6 +109,7 @@ export default async function ConciliacionesPage() {
                     cfdi_rfc_emisor={cfdi?.rfc_emisor ?? null}
                     cfdi_rfc_receptor={cfdi?.rfc_receptor ?? null}
                     cfdi_total={cfdiTotal}
+                    cfdi_concepto={(cfdi as { concepto?: string | null } | undefined)?.concepto ?? null}
                     tx_fecha={tx?.fecha_operacion ?? null}
                     tx_concepto={tx?.concepto_bancario ?? null}
                     tx_rastreo={tx?.clave_rastreo ?? null}

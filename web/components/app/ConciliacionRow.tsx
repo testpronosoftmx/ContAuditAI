@@ -11,6 +11,7 @@ type ConciliacionRowProps = {
   cfdi_rfc_emisor: string | null
   cfdi_rfc_receptor: string | null
   cfdi_total: number
+  cfdi_concepto: string | null
   tx_fecha: string | null
   tx_concepto: string | null
   tx_rastreo: string | null
@@ -26,6 +27,7 @@ export default function ConciliacionRow({
   cfdi_rfc_emisor,
   cfdi_rfc_receptor,
   cfdi_total,
+  cfdi_concepto,
   tx_fecha,
   tx_concepto,
   tx_rastreo,
@@ -130,6 +132,12 @@ export default function ConciliacionRow({
                       <div className="flex items-center justify-between gap-4">
                         <span className="text-[10px] text-zinc-500 uppercase tracking-wider">RFC Receptor</span>
                         <span className="font-mono text-xs text-zinc-300">{cfdi_rfc_receptor}</span>
+                      </div>
+                    )}
+                    {cfdi_concepto && (
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">Concepto</span>
+                        <span className="text-xs text-indigo-300 text-right">{cfdi_concepto}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between gap-4">

@@ -97,7 +97,7 @@ const SEV_MODAL_BORDER: Record<string, string> = {
   BAJA:    'border-blue-500/40',
 }
 
-export default function AlertaItem({ alerta }: { alerta: Alerta }) {
+export default function AlertaItem({ alerta, concepto }: { alerta: Alerta; concepto?: string | null }) {
   const [pending, start] = useTransition()
   const [open, setOpen] = useState(false)
 
@@ -174,8 +174,13 @@ export default function AlertaItem({ alerta }: { alerta: Alerta }) {
             </div>
 
             {/* Descripción */}
-            <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3">
+            <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 flex flex-col gap-2">
               <p className="text-xs text-zinc-300 leading-relaxed font-mono">{alerta.descripcion}</p>
+              {concepto && (
+                <p className="text-xs text-indigo-300 font-medium">
+                  Concepto: <span className="text-zinc-300 font-normal">{concepto}</span>
+                </p>
+              )}
             </div>
 
             {/* UUID + fecha */}
