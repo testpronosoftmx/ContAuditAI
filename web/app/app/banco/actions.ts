@@ -46,15 +46,13 @@ function parseCSV(text: string): TxRow[] {
 }
 
 async function parsePDF(buffer: Buffer): Promise<TxRow[]> {
-  // Dynamic import to avoid Next.js bundling issues with pdf-parse
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require('pdf-parse/lib/pdf-parse') as (buf: Buffer) => Promise<{ text: string }>
-  const { text } = await pdfParse(buffer)
+  // pdf-parse v2 uses a class-based API; dynamic import keeps it out of the webpack bundle
+  const { PDFParse } = await import('pdf-parse')
+  const parser = new PDFParse({ data: buffer })
+  const { text } = await parser.getText()
 
   const rows: TxRow[] = []
-  // Find lines containing a date pattern YYYY-MM-DD
   const dateRe  = /(\d{4}-\d{2}-\d{2})/
-  // Match currency values like $16,217.20 or 16217.20
   const moneyRe = /\$?([\d,]+\.\d{2})/g
 
   for (const line of text.split('\n')) {
@@ -63,7 +61,6 @@ async function parsePDF(buffer: Buffer): Promise<TxRow[]> {
 
     const fecha = dateMatch[1]
 
-    // Extract all money amounts on this line
     const amounts: number[] = []
     let m: RegExpExecArray | null
     moneyRe.lastIndex = 0
@@ -71,31 +68,17 @@ async function parsePDF(buffer: Buffer): Promise<TxRow[]> {
       amounts.push(parseFloat(m[1].replace(/,/g, '')))
     }
 
-    // The last amount is always Saldo — ignore it
-    // Remaining: could be [cargo] or [abono] or [cargo, abono] — unlikely both
-    // Strategy: look for CARGO or ABONO keywords, or infer from position in text
-    const isCargo = /CARGO|PAGO|RETIRO|COMISION/i.test(line)
-    const isAbono = /ABONO|DEPOSITO|SPEI IN|TRANSFERENCIA/i.test(line)
-
-    let monto = 0
-    let tipo: 'Ingreso' | 'Egreso' = 'Ingreso'
-
-    if (amounts.length >= 2) {
-      // amounts: [...txAmount, saldo] — take second-to-last as tx amount
-      monto = amounts[amounts.length - 2]
-      tipo  = isCargo ? 'Egreso' : 'Ingreso'
-    } else if (amounts.length === 1) {
-      // Only saldo — skip (no tx amount)
-      continue
-    }
-
+    // Layout: [txAmount, saldo] — last is always saldo, second-to-last is the tx
+    if (amounts.length < 2) continue
+    const monto = amounts[amounts.length - 2]
     if (!monto || monto <= 0) continue
 
-    // Extract concepto: text between date and first $ amount
-    const afterDate  = line.slice(line.indexOf(fecha) + fecha.length).trim()
-    const firstDolar = afterDate.search(/\$?[\d,]+\.\d{2}/)
-    const concepto   = firstDolar > 0 ? afterDate.slice(0, firstDolar).trim() : afterDate.slice(0, 40).trim()
-    // Concepto may contain the row number at the start — strip leading digits
+    const isCargo = /CARGO|PAGO|RETIRO|COMISION/i.test(line)
+    const tipo: 'Ingreso' | 'Egreso' = isCargo ? 'Egreso' : 'Ingreso'
+
+    const afterDate     = line.slice(line.indexOf(fecha) + fecha.length).trim()
+    const firstMoneyIdx = afterDate.search(/\$?[\d,]+\.\d{2}/)
+    const concepto      = firstMoneyIdx > 0 ? afterDate.slice(0, firstMoneyIdx).trim() : afterDate.slice(0, 40).trim()
     const conceptoClean = concepto.replace(/^\d+\s*/, '').trim()
 
     rows.push({
