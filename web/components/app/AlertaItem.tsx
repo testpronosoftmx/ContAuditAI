@@ -79,20 +79,28 @@ export default function AlertaItem({ alerta }: { alerta: Alerta }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity pt-1">
-        <button 
-          onClick={() => accion('Resuelto')}
-          className="px-2 py-0.5 text-[9px] bg-zinc-800 text-zinc-300 rounded hover:bg-zinc-700 font-bold uppercase"
-        >
-          Resuelto
-        </button>
-        <button 
-          onClick={() => accion('Ignorado')}
-          className="px-2 py-0.5 text-[9px] text-zinc-500 hover:text-zinc-400 font-bold uppercase"
-        >
-          Ignorar
-        </button>
-      </div>
+      {alerta.estado === 'Pendiente' ? (
+        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity pt-1">
+          <button
+            onClick={() => accion('Resuelto')}
+            disabled={pending}
+            className="px-2 py-0.5 text-[9px] bg-zinc-800 text-zinc-300 rounded hover:bg-zinc-700 font-bold uppercase disabled:opacity-40"
+          >
+            Resuelto
+          </button>
+          <button
+            onClick={() => accion('Ignorado')}
+            disabled={pending}
+            className="px-2 py-0.5 text-[9px] text-zinc-500 hover:text-zinc-400 font-bold uppercase disabled:opacity-40"
+          >
+            Ignorar
+          </button>
+        </div>
+      ) : (
+        <span className="text-[9px] text-zinc-600 font-bold uppercase pt-1.5 shrink-0">
+          {alerta.estado}
+        </span>
+      )}
     </div>
   )
 }
