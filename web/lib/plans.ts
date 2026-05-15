@@ -1,7 +1,7 @@
 export const PLANES = {
   gratis: {
     nombre:    'Gratis',
-    cfdis_mes: 150,
+    cfdis_mes: 100,
     usuarios:  1,
     vault:     false,
     reportes:  false,
