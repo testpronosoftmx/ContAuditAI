@@ -175,7 +175,13 @@ export default function AlertaItem({ alerta }: { alerta: Alerta }) {
 
             {/* Descripción */}
             <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3">
-              <p className="text-xs text-zinc-300 leading-relaxed font-mono">{alerta.descripcion}</p>
+              <p className="text-xs text-zinc-300 leading-relaxed font-mono">
+                {(alerta.descripcion ?? '').split(/("([^"]+)")/g).map((part, i) =>
+                  part.startsWith('"') && part.endsWith('"')
+                    ? <span key={i} className="text-indigo-300 font-semibold">{part}</span>
+                    : part
+                )}
+              </p>
             </div>
 
             {/* UUID + fecha */}
