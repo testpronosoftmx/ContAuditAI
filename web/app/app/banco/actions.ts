@@ -51,7 +51,9 @@ async function parsePDF(buffer: Buffer): Promise<TxRow[]> {
   const parser = new PDFParse({ data: buffer })
   const { text } = await parser.getText()
 
-  const rows: TxRow[] = []
+  type RawRow = { fecha: string; monto: number; saldo: number; concepto: string }
+  const raw: RawRow[] = []
+
   const dateRe  = /(\d{4}-\d{2}-\d{2})/
   const moneyRe = /\$?([\d,]+\.\d{2})/g
 
@@ -68,29 +70,33 @@ async function parsePDF(buffer: Buffer): Promise<TxRow[]> {
       amounts.push(parseFloat(m[1].replace(/,/g, '')))
     }
 
-    // Layout: [txAmount, saldo] — last is always saldo, second-to-last is the tx
+    // PDF table layout: [..., txAmount, saldo] — last is always saldo
     if (amounts.length < 2) continue
+    const saldo = amounts[amounts.length - 1]
     const monto = amounts[amounts.length - 2]
     if (!monto || monto <= 0) continue
-
-    const isCargo = /CARGO|PAGO|RETIRO|COMISION/i.test(line)
-    const tipo: 'Ingreso' | 'Egreso' = isCargo ? 'Egreso' : 'Ingreso'
 
     const afterDate     = line.slice(line.indexOf(fecha) + fecha.length).trim()
     const firstMoneyIdx = afterDate.search(/\$?[\d,]+\.\d{2}/)
     const concepto      = firstMoneyIdx > 0 ? afterDate.slice(0, firstMoneyIdx).trim() : afterDate.slice(0, 40).trim()
     const conceptoClean = concepto.replace(/^\d+\s*/, '').trim()
 
-    rows.push({
-      fecha_operacion: `${fecha}T12:00:00`,
-      monto: String(monto),
-      tipo,
-      concepto_bancario: conceptoClean || 'Movimiento bancario',
-      clave_rastreo: '',
-    })
+    raw.push({ fecha, monto, saldo, concepto: conceptoClean || 'Movimiento bancario' })
   }
 
-  return rows
+  // Determine Ingreso/Egreso by saldo direction — avoids keyword heuristics
+  // (e.g. "PAGO V-CENT" is an abono received, not a payment made)
+  return raw.map((r, i) => {
+    const prevSaldo = i === 0 ? r.saldo - r.monto : raw[i - 1].saldo
+    const tipo: 'Ingreso' | 'Egreso' = r.saldo > prevSaldo ? 'Ingreso' : 'Egreso'
+    return {
+      fecha_operacion: `${r.fecha}T12:00:00`,
+      monto: String(r.monto),
+      tipo,
+      concepto_bancario: r.concepto,
+      clave_rastreo: '',
+    }
+  })
 }
 
 export async function reinicializarBanco(): Promise<{ error?: string }> {
