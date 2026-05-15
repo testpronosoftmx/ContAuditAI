@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import AnalisisBtn from '@/components/app/AnalisisBtn'
+import RiskScoreChart from '@/components/app/RiskScoreChart'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -96,22 +97,20 @@ export default async function DashboardPage() {
       {/* Historial de scores (si hay más de 1 mes) */}
       {(historial?.length ?? 0) > 1 && (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
-          <h2 className="font-semibold text-sm">Evolución del Risk Score</h2>
-          <div className="flex items-end gap-3 h-20">
-            {historial!.map(h => {
-              const s = Number(h.score)
-              const col = s >= 80 ? 'bg-green-500' : s >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-              return (
-                <div key={h.periodo} className="flex flex-col items-center gap-1 flex-1">
-                  <span className="text-xs text-gray-400">{Math.round(s)}</span>
-                  <div className={`w-full rounded-t ${col}`} style={{ height: `${s}%` }} />
-                  <span className="text-xs text-gray-500">
-                    {new Date(h.periodo).toLocaleDateString('es-MX', { month: 'short' })}
-                  </span>
-                </div>
-              )
-            })}
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-sm">Evolución del Risk Score</h2>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-px bg-green-500"></span>Bajo ≥80</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-px bg-yellow-500"></span>Medio ≥50</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-px bg-red-500"></span>Alto &lt;50</span>
+            </div>
           </div>
+          <RiskScoreChart
+            data={historial!.map(h => ({
+              mes: new Date(h.periodo).toLocaleDateString('es-MX', { month: 'short', year: '2-digit' }),
+              score: Number(h.score),
+            }))}
+          />
         </div>
       )}
 
