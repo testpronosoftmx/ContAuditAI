@@ -1,0 +1,205 @@
+﻿diff --git a/app/index.html b/app/index.html
+index 344cd3e..e16bf4f 100644
+--- a/app/index.html
++++ b/app/index.html
+@@ -914,7 +914,7 @@ async function selectGoleoOption(option){
+       const res=await fetch('/.netlify/functions/create-payment-intent',{
+         method:'POST',
+         headers:{'Content-Type':'application/json'},
+-        body:JSON.stringify({productId:'goleo_card',userId:_user?.id||'anonymous',tournamentId:activeTid||null}),
++        body:JSON.stringify({productId:'goleo_card',userId:_user?.id||'anonymous',tournamentId:activeTid||null,playerId:_pendingGoleoExport?.playerId||null}),
+       });
+       if(!res.ok)throw new Error(await res.text());
+       const{clientSecret}=await res.json();
+@@ -968,7 +968,7 @@ async function confirmGoleoCardPayment(){
+       errEl.textContent=error.message;
+       btn.disabled=false;btn.textContent='Pagar $10 MXN';
+     }else{
+-      if(activeTid) localStorage.setItem('ligakit_goleo_paid_'+activeTid,'1');
++      if(activeTid) localStorage.setItem('ligakit_goleo_paid_'+activeTid+'_'+(_pendingGoleoExport?.playerId||_pendingGoleoExport?.playerName||''),'1');
+       closeGoleoCardModal();
+       toast('Ô£à ┬íPago exitoso! Descargando...');
+       if(_pendingGoleoExport){
+@@ -3236,7 +3236,7 @@ function renderGoleo(){
+         </div>
+       </div>
+       
+-      <button class="share-btn" onclick="requestGoleoCardExport('gcard-${i}', '${ea(g.name)}')">
++      <button class="share-btn" onclick="requestGoleoCardExport('gcard-${i}', '${ea(g.name)}', '${g.playerId||''}')">
+         <span class="share-icon">­ƒô©</span> Exportar Carta${planAtLeast('gold')?'':' <span style="font-size:10px;opacity:.8">$10</span>'}
+       </button>
+     </div>`;
+@@ -3245,23 +3245,22 @@ function renderGoleo(){
+ 
+ let _pendingGoleoExport=null; // {cardId, playerName} esperando pago
+ 
+-async function requestGoleoCardExport(cardId, playerName){
++async function requestGoleoCardExport(cardId, playerName, playerId){
+   if(planAtLeast('gold')){
+     shareGoleoCard(cardId, playerName);
+     return;
+   }
+-  // Anon: check localStorage
+-  if(activeTid && localStorage.getItem('ligakit_goleo_paid_'+activeTid)){
++  const lsKey='ligakit_goleo_paid_'+(activeTid||'')+'_'+(playerId||playerName);
++  if(activeTid && localStorage.getItem(lsKey)){
+     shareGoleoCard(cardId,playerName);
+     return;
+   }
+-  // Logged-in: check payment_receipts in DB
+-  if(_user && activeTid){
++  if(_user && playerId){
+     const{data}=await sb.schema('ligakit').from('payment_receipts')
+-      .select('payment_intent_id').eq('user_id',_user.id).eq('tournament_id',activeTid).maybeSingle();
++      .select('payment_intent_id').eq('user_id',_user.id).eq('player_id',playerId).maybeSingle();
+     if(data){shareGoleoCard(cardId,playerName);return;}
+   }
+-  _pendingGoleoExport={cardId, playerName};
++  _pendingGoleoExport={cardId,playerName,playerId};
+   openGoleoCardModal(_user?.id);
+ }
+ 
+@@ -3317,7 +3316,7 @@ function getGoleadores(){
+           const k=tid+'_'+pname;
+           if(!map[k]){
+             const po=team.players.find(p=>p.name===pname);
+-            map[k]={name:pname,photo:po?.photo||null,teamId:team.id,teamColor:team.color,teamName:team.name,goals:0};
++            map[k]={name:pname,photo:po?.photo||null,playerId:po?.id||null,teamId:team.id,teamColor:team.color,teamName:team.name,goals:0};
+           }
+           map[k].goals+=cnt;
+         }
+@@ -3815,7 +3814,7 @@ function renderPublicView(){
+             <div class="gc-team-flag"><div class="gc-team-dot" style="background:${g.teamColor};"></div>${h(g.teamName)}</div>
+           </div>
+         </div>
+-        <button class="share-btn" onclick="requestGoleoCardExport('pub-gcard-${i}','${ea(g.name)}')">
++        <button class="share-btn" onclick="requestGoleoCardExport('pub-gcard-${i}','${ea(g.name)}','${g.playerId||''}')">
+           <span class="share-icon">­ƒô©</span> Descargar Carta <span style="font-size:10px;opacity:.8">$10 MXN</span>
+         </button>
+       </div>`;
+diff --git a/dist/app/index.html b/dist/app/index.html
+index 46b5beb..a904d92 100644
+--- a/dist/app/index.html
++++ b/dist/app/index.html
+@@ -913,7 +913,7 @@ async function selectGoleoOption(option){
+       const res=await fetch('/.netlify/functions/create-payment-intent',{
+         method:'POST',
+         headers:{'Content-Type':'application/json'},
+-        body:JSON.stringify({productId:'goleo_card',userId:_user?.id||'anonymous',tournamentId:activeTid||null}),
++        body:JSON.stringify({productId:'goleo_card',userId:_user?.id||'anonymous',tournamentId:activeTid||null,playerId:_pendingGoleoExport?.playerId||null}),
+       });
+       if(!res.ok)throw new Error(await res.text());
+       const{clientSecret}=await res.json();
+@@ -967,7 +967,7 @@ async function confirmGoleoCardPayment(){
+       errEl.textContent=error.message;
+       btn.disabled=false;btn.textContent='Pagar $10 MXN';
+     }else{
+-      if(activeTid) localStorage.setItem('ligakit_goleo_paid_'+activeTid,'1');
++      if(activeTid) localStorage.setItem('ligakit_goleo_paid_'+activeTid+'_'+(_pendingGoleoExport?.playerId||_pendingGoleoExport?.playerName||''),'1');
+       closeGoleoCardModal();
+       toast('Ô£à ┬íPago exitoso! Descargando...');
+       if(_pendingGoleoExport){
+@@ -3202,7 +3202,7 @@ function renderGoleo(){
+         </div>
+       </div>
+       
+-      <button class="share-btn" onclick="requestGoleoCardExport('gcard-${i}', '${ea(g.name)}')">
++      <button class="share-btn" onclick="requestGoleoCardExport('gcard-${i}', '${ea(g.name)}', '${g.playerId||''}')">
+         <span class="share-icon">­ƒô©</span> Exportar Carta${planAtLeast('gold')?'':' <span style="font-size:10px;opacity:.8">$10</span>'}
+       </button>
+     </div>`;
+@@ -3211,23 +3211,22 @@ function renderGoleo(){
+ 
+ let _pendingGoleoExport=null; // {cardId, playerName} esperando pago
+ 
+-async function requestGoleoCardExport(cardId, playerName){
++async async function requestGoleoCardExport(cardId, playerName, playerId){
+   if(planAtLeast('gold')){
+     shareGoleoCard(cardId, playerName);
+     return;
+   }
+-  // Anon: check localStorage
+-  if(activeTid && localStorage.getItem('ligakit_goleo_paid_'+activeTid)){
++  const lsKey='ligakit_goleo_paid_'+(activeTid||'')+'_'+(playerId||playerName);
++  if(activeTid && localStorage.getItem(lsKey)){
+     shareGoleoCard(cardId,playerName);
+     return;
+   }
+-  // Logged-in: check payment_receipts in DB
+-  if(_user && activeTid){
++  if(_user && playerId){
+     const{data}=await sb.schema('ligakit').from('payment_receipts')
+-      .select('payment_intent_id').eq('user_id',_user.id).eq('tournament_id',activeTid).maybeSingle();
++      .select('payment_intent_id').eq('user_id',_user.id).eq('player_id',playerId).maybeSingle();
+     if(data){shareGoleoCard(cardId,playerName);return;}
+   }
+-  _pendingGoleoExport={cardId, playerName};
++  _pendingGoleoExport={cardId,playerName,playerId};
+   openGoleoCardModal(_user?.id);
+ }
+ 
+@@ -3283,7 +3282,7 @@ function getGoleadores(){
+           const k=tid+'_'+pname;
+           if(!map[k]){
+             const po=team.players.find(p=>p.name===pname);
+-            map[k]={name:pname,photo:po?.photo||null,teamId:team.id,teamColor:team.color,teamName:team.name,goals:0};
++            map[k]={name:pname,photo:po?.photo||null,playerId:po?.id||null,teamId:team.id,teamColor:team.color,teamName:team.name,goals:0};
+           }
+           map[k].goals+=cnt;
+         }
+@@ -3781,7 +3780,7 @@ function renderPublicView(){
+             <div class="gc-team-flag"><div class="gc-team-dot" style="background:${g.teamColor};"></div>${h(g.teamName)}</div>
+           </div>
+         </div>
+-        <button class="share-btn" onclick="requestGoleoCardExport('pub-gcard-${i}','${ea(g.name)}')">
++        <button class="share-btn" onclick="requestGoleoCardExport('pub-gcard-${i}','${ea(g.name)}','${g.playerId||''}')">
+           <span class="share-icon">­ƒô©</span> Descargar Carta <span style="font-size:10px;opacity:.8">$10 MXN</span>
+         </button>
+       </div>`;
+diff --git a/netlify/functions/create-payment-intent.js b/netlify/functions/create-payment-intent.js
+index 7a5330a..a123b21 100644
+--- a/netlify/functions/create-payment-intent.js
++++ b/netlify/functions/create-payment-intent.js
+@@ -12,7 +12,7 @@ const PRODUCTS = {
+ exports.handler = async (event) => {
+   if (event.httpMethod !== 'POST') return { statusCode: 405 };
+ 
+-  const { productId, userId, tournamentId } = JSON.parse(event.body || '{}');
++  const { productId, userId, tournamentId, playerId } = JSON.parse(event.body || '{}');
+   const product = PRODUCTS[productId];
+   if (!product) return { statusCode: 400, body: 'Invalid product' };
+ 
+@@ -20,7 +20,7 @@ exports.handler = async (event) => {
+     amount: product.amount,
+     currency: product.currency,
+     description: product.description,
+-    metadata: { userId: userId || 'anonymous', productId, tournamentId: tournamentId || '' },
++    metadata: { userId: userId || 'anonymous', productId, tournamentId: tournamentId || '', playerId: playerId || '' },
+   });
+ 
+   return {
+diff --git a/netlify/functions/stripe-webhook.js b/netlify/functions/stripe-webhook.js
+index c77891b..735d820 100644
+--- a/netlify/functions/stripe-webhook.js
++++ b/netlify/functions/stripe-webhook.js
+@@ -26,8 +26,9 @@ exports.handler = async (event) => {
+   switch (stripeEvent.type) {
+ 
+     case 'payment_intent.succeeded': {
+-      const { userId, productId, tournamentId } = obj.metadata;
+-      if (productId !== 'goleo_card' || !userId || userId === 'anonymous') break;
++      const { userId, productId, tournamentId, playerId } = obj.metadata;
++      if (productId !== 'goleo_card') break;
++      const uid = (userId && userId !== 'anonymous') ? userId : null;
+ 
+       // Idempotency: skip if already processed
+       const { data: dup } = await sb.schema('ligakit').from('payment_receipts')
+@@ -35,7 +36,7 @@ exports.handler = async (event) => {
+       if (dup) break;
+ 
+       await sb.schema('ligakit').from('payment_receipts')
+-        .insert({ payment_intent_id: obj.id, user_id: userId, tournament_id: tournamentId || null });
++        .insert({ payment_intent_id: obj.id, user_id: uid, tournament_id: tournamentId || null, player_id: playerId || null });
+       break;
+     }
+ 
