@@ -15,6 +15,14 @@ type CfdiRow = {
   total: string
 }
 
+type CrpRow = {
+  uuid_pago: string
+  uuid_relacionado: string
+  fecha_pago: string
+  monto_pagado: number
+  tenant_id: string
+}
+
 type UploadState = {
   insertados?: number
   omitidos?: number
@@ -22,22 +30,23 @@ type UploadState = {
   error?: string
 }
 
+const init: UploadState = {}
+
 function attr(xml: string, name: string): string {
   const m = xml.match(new RegExp(`\\b${name}="([^"]*)"`, 'i'))
   return m?.[1] ?? ''
 }
 
-function parseCFDI(xml: string, filename: string): CfdiRow | null {
+function parseCFDI(xml: string): { cfdi: CfdiRow; crp?: Omit<CrpRow, 'tenant_id'> } | null {
   try {
-    const uuid    = attr(xml, 'UUID')
-    const fecha   = attr(xml, 'Fecha')
-    const tipo    = attr(xml, 'TipoDeComprobante')
-    const metodo  = attr(xml, 'MetodoPago')
+    const uuid     = attr(xml, 'UUID')
+    const fecha    = attr(xml, 'Fecha')
+    const tipo     = attr(xml, 'TipoDeComprobante')
+    const metodo   = attr(xml, 'MetodoPago')
     const subtotal = attr(xml, 'SubTotal')
-    const total   = attr(xml, 'Total')
-    const iva     = attr(xml, 'TotalImpuestosTrasladados') || '0'
+    const total    = attr(xml, 'Total')
+    const iva      = attr(xml, 'TotalImpuestosTrasladados') || '0'
 
-    // Emisor y Receptor están en elementos distintos — buscamos por contexto
     const emisorMatch   = xml.match(/<cfdi:Emisor[^>]*Rfc="([^"]+)"/i)
     const receptorMatch = xml.match(/<cfdi:Receptor[^>]*Rfc="([^"]+)"/i)
     const rfcEmisor   = emisorMatch?.[1] ?? ''
@@ -45,13 +54,34 @@ function parseCFDI(xml: string, filename: string): CfdiRow | null {
 
     if (!uuid || !fecha || !tipo || !rfcEmisor || !rfcReceptor) return null
 
-    return { uuid, rfc_emisor: rfcEmisor, rfc_receptor: rfcReceptor,
-             fecha_emision: fecha, tipo_comprobante: tipo,
-             metodo_pago: metodo, subtotal, iva, total }
+    const cfdi: CfdiRow = {
+      uuid, rfc_emisor: rfcEmisor, rfc_receptor: rfcReceptor,
+      fecha_emision: fecha, tipo_comprobante: tipo,
+      metodo_pago: metodo, subtotal, iva, total,
+    }
+
+    // Para tipo P: extraer UUID de la factura relacionada via cfdi:CfdiRelacionado
+    let crp: Omit<CrpRow, 'tenant_id'> | undefined
+    if (tipo === 'P') {
+      const relacionadoMatch = xml.match(/<cfdi:CfdiRelacionado[^>]*UUID="([^"]+)"/i)
+      const uuidRelacionado  = relacionadoMatch?.[1] ?? ''
+      if (uuidRelacionado) {
+        crp = {
+          uuid_pago:        uuid,
+          uuid_relacionado: uuidRelacionado,
+          fecha_pago:       fecha,
+          monto_pagado:     parseFloat(total) || 0,
+        }
+      }
+    }
+
+    return { cfdi, crp }
   } catch {
     return null
   }
 }
+
+export { init }
 
 export async function subirCFDIs(
   _prev: UploadState,
@@ -61,13 +91,15 @@ export async function subirCFDIs(
   if (!archivos.length) return { error: 'No seleccionaste ningún archivo.' }
 
   const cfdis: CfdiRow[] = []
+  const crps:  Omit<CrpRow, 'tenant_id'>[] = []
   const errores: string[] = []
 
   for (const file of archivos) {
-    const texto = await file.text()
-    const cfdi  = parseCFDI(texto, file.name)
-    if (cfdi) {
-      cfdis.push(cfdi)
+    const texto     = await file.text()
+    const resultado = parseCFDI(texto)
+    if (resultado) {
+      cfdis.push(resultado.cfdi)
+      if (resultado.crp) crps.push(resultado.crp)
     } else {
       errores.push(file.name)
     }
@@ -78,16 +110,34 @@ export async function subirCFDIs(
   }
 
   const supabase = await createClient()
+
   const { data: insertados, error: rpcError } = await supabase
     .rpc('insertar_cfdis', { p_cfdis: cfdis })
 
   if (rpcError) return { error: `Error al guardar: ${rpcError.message}` }
 
+  // Insertar Complementos de Pago (tipo P) en cfdi_pagos
+  if (crps.length > 0) {
+    const { data: tenantUser } = await supabase
+      .from('tenant_users')
+      .select('tenant_id')
+      .eq('activo', true)
+      .limit(1)
+      .maybeSingle()
+
+    if (tenantUser?.tenant_id) {
+      const rows: CrpRow[] = crps.map(c => ({ ...c, tenant_id: tenantUser.tenant_id }))
+      await supabase
+        .from('cfdi_pagos')
+        .upsert(rows, { onConflict: 'uuid_pago' })
+    }
+  }
+
   revalidatePath('/app/cfdi')
 
   return {
     insertados: insertados ?? 0,
-    omitidos: cfdis.length - (insertados ?? 0),
+    omitidos:   cfdis.length - (insertados ?? 0),
     errores,
   }
 }
