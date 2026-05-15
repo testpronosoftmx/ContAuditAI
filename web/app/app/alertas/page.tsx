@@ -3,14 +3,17 @@ import AlertaItem from '@/components/app/AlertaItem'
 
 export const dynamic = 'force-dynamic'
 
-type Filtro = 'todas' | 'criticas' | 'medias' | 'resueltas'
+type Filtro = 'todas' | 'criticas' | 'medias' | 'bajas' | 'resueltas'
 
 const TABS: { key: Filtro; label: string }[] = [
   { key: 'todas',     label: 'Pendientes' },
   { key: 'criticas',  label: 'Críticas'   },
   { key: 'medias',    label: 'Medias'     },
+  { key: 'bajas',     label: 'Bajas'      },
   { key: 'resueltas', label: 'Resueltas'  },
 ]
+
+const SEV_ORDER: Record<string, number> = { CRITICA: 0, MEDIA: 1, BAJA: 2 }
 
 export default async function AlertasPage({
   searchParams,
@@ -25,7 +28,6 @@ export default async function AlertasPage({
   let query = supabase
     .from('alertas_riesgo')
     .select('id, tipo_alerta, severidad, descripcion, estado, created_at, uuid_referencia')
-    .order('severidad', { ascending: true })
     .order('created_at', { ascending: false })
 
   if (filtro === 'resueltas') {
@@ -34,11 +36,18 @@ export default async function AlertasPage({
     query = query.eq('estado', 'Pendiente').eq('severidad', 'CRITICA')
   } else if (filtro === 'medias') {
     query = query.eq('estado', 'Pendiente').eq('severidad', 'MEDIA')
+  } else if (filtro === 'bajas') {
+    query = query.eq('estado', 'Pendiente').eq('severidad', 'BAJA')
   } else {
     query = query.eq('estado', 'Pendiente')
   }
 
-  const { data: alertas } = await query.limit(200)
+  const { data: raw } = await query.limit(200)
+
+  // Pendientes: ordenar CRITICA → MEDIA → BAJA
+  const alertas = filtro === 'todas'
+    ? [...(raw ?? [])].sort((a, b) => (SEV_ORDER[a.severidad] ?? 9) - (SEV_ORDER[b.severidad] ?? 9))
+    : (raw ?? [])
 
   return (
     <div className="flex flex-col gap-6">

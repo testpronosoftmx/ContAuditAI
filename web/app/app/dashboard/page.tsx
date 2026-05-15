@@ -32,11 +32,11 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: riskData }, { data: historial }, { data: alertas }, { count: cfdisCount }, { count: txCount }, { data: cfdiRaw }] =
+  const [{ data: riskData }, { data: historial }, { data: alertas_raw }, { count: cfdisCount }, { count: txCount }, { data: cfdiRaw }] =
     await Promise.all([
       supabase.from('risk_scores').select('score, factores, periodo').order('periodo', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('risk_scores').select('score, periodo').order('periodo', { ascending: true }).limit(6),
-      supabase.from('alertas_riesgo').select('id, tipo_alerta, severidad, descripcion').eq('estado', 'Pendiente').order('severidad', { ascending: true }).limit(5),
+      supabase.from('alertas_riesgo').select('id, tipo_alerta, severidad, descripcion').eq('estado', 'Pendiente').order('created_at', { ascending: false }).limit(20),
       supabase.from('cfdi_comprobantes').select('*', { count: 'exact', head: true }),
       supabase.from('transacciones_bancarias').select('*', { count: 'exact', head: true }),
       supabase.from('cfdi_comprobantes').select('tipo_comprobante, total, fecha_emision'),
@@ -59,6 +59,11 @@ export default async function DashboardPage() {
 
   const cfdiTipoData    = Array.from(tipoMap.entries()).map(([name, v]) => ({ name, value: v.count, monto: v.monto }))
   const cfdiMensualData = Array.from(mensualMap.entries()).map(([mes, v]) => ({ mes, ...v }))
+
+  const SEV_ORDER: Record<string, number> = { CRITICA: 0, MEDIA: 1, BAJA: 2 }
+  const alertas = (alertas_raw ?? [])
+    .sort((a, b) => (SEV_ORDER[a.severidad] ?? 9) - (SEV_ORDER[b.severidad] ?? 9))
+    .slice(0, 5)
 
   const score    = riskData?.score != null ? Number(riskData.score) : null
   const factores = riskData?.factores as Record<string, number> | null
