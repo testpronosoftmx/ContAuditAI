@@ -81,8 +81,6 @@ function parseCFDI(xml: string): { cfdi: CfdiRow; crp?: Omit<CrpRow, 'tenant_id'
   }
 }
 
-export { init }
-
 export async function subirCFDIs(
   _prev: UploadState,
   formData: FormData,
