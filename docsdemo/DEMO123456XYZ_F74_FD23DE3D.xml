@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="F" Folio="74" Fecha="2026-05-16T12:21:42" Total="6440.16" SubTotal="5551.86" Moneda="MXN" TipoDeComprobante="I" MetodoPago="PUE" FormaPago="03" LugarExpedicion="10000">
+	<cfdi:Emisor Rfc="DEMO123456XYZ" Nombre="EMPRESA DEMO SA DE CV" RegimenFiscal="601" />
+	<cfdi:Receptor Rfc="REC282298ABC" Nombre="CLIENTE 74 SA DE CV" UsoCFDI="G03" RegimenFiscalReceptor="601" DomicilioFiscalReceptor="20000" />
+	<cfdi:Conceptos>
+		<cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="E48" Descripcion="Capacitación de personal operativo" ValorUnitario="5551.86" Importe="5551.86" ObjetoImp="02" />
+	</cfdi:Conceptos>
+	<cfdi:Impuestos TotalImpuestosTrasladados="888.3">
+		<cfdi:Traslados>
+			<cfdi:Traslado Base="5551.86" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="888.3" />
+		</cfdi:Traslados>
+	</cfdi:Impuestos>
+	<cfdi:Complemento>
+		<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" UUID="FD23DE3D-3493-44C4-BBCA-29C303F10710" />
+	</cfdi:Complemento>
+</cfdi:Comprobante>

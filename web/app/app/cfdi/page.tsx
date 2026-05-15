@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import CFDIUpload from '@/components/app/CFDIUpload'
+import ReinicializarBtn from '@/components/app/ReinicializarBtn'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,9 +17,12 @@ export default async function CfdiPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold">CFDIs</h1>
-        <p className="text-sm text-gray-400 mt-1">Importa y analiza tus comprobantes fiscales</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">CFDIs</h1>
+          <p className="text-sm text-gray-400 mt-1">Importa y analiza tus comprobantes fiscales</p>
+        </div>
+        <ReinicializarBtn />
       </div>
 
       <CFDIUpload />
@@ -42,7 +46,7 @@ export default async function CfdiPage() {
               </thead>
               <tbody>
                 {cfdis!.map((c) => (
-                  <tr key={c.uuid} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <tr key={`${c.uuid}-${c.fecha_emision}`} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3 font-mono text-xs text-gray-400">{c.uuid.slice(0, 8).toUpperCase()}</td>
                     <td className="px-4 py-3 text-gray-300">{new Date(c.fecha_emision).toLocaleDateString('es-MX')}</td>
                     <td className="px-4 py-3">

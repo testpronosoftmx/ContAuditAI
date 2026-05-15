@@ -8,8 +8,17 @@ import xml.etree.ElementTree as ET
 # Configuración de Empresa Demo
 USER_RFC = "DEMO123456XYZ"
 USER_NOMBRE = "EMPRESA DEMO SA DE CV"
+import glob
+
 OUTPUT_DIR = "docsdemo"
-if not os.path.exists(OUTPUT_DIR): os.makedirs(OUTPUT_DIR)
+if not os.path.exists(OUTPUT_DIR):
+    os.makedirs(OUTPUT_DIR)
+else:
+    for f in glob.glob(os.path.join(OUTPUT_DIR, "*")):
+        try:
+            os.remove(f)
+        except OSError:
+            pass
 
 # Datos de Escenario
 RFC_EFOS = "AAA010101AAA"

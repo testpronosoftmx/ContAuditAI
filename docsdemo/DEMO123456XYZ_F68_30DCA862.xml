@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="F" Folio="68" Fecha="2026-05-29T17:30:34" Total="9051.84" SubTotal="7803.31" Moneda="MXN" TipoDeComprobante="I" MetodoPago="PUE" FormaPago="03" LugarExpedicion="10000">
+	<cfdi:Emisor Rfc="DEMO123456XYZ" Nombre="EMPRESA DEMO SA DE CV" RegimenFiscal="601" />
+	<cfdi:Receptor Rfc="REC725261ABC" Nombre="CLIENTE 68 SA DE CV" UsoCFDI="G03" RegimenFiscalReceptor="601" DomicilioFiscalReceptor="20000" />
+	<cfdi:Conceptos>
+		<cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="E48" Descripcion="Implementación de ERP en la nube" ValorUnitario="7803.31" Importe="7803.31" ObjetoImp="02" />
+	</cfdi:Conceptos>
+	<cfdi:Impuestos TotalImpuestosTrasladados="1248.53">
+		<cfdi:Traslados>
+			<cfdi:Traslado Base="7803.31" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1248.53" />
+		</cfdi:Traslados>
+	</cfdi:Impuestos>
+	<cfdi:Complemento>
+		<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" UUID="30DCA862-0A8A-4C88-B6E0-CD4E626631C2" />
+	</cfdi:Complemento>
+</cfdi:Comprobante>

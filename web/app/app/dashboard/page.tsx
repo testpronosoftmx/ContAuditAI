@@ -95,8 +95,21 @@ export default async function DashboardPage() {
           </div>
           {score !== null && (
             <>
-              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                <div className={`h-full rounded-full transition-all ${sc!.bar}`} style={{ width: `${score}%` }} />
+              {/* Barra degradada: izquierda = más riesgo, derecha = más sano */}
+              <div className="relative mt-1">
+                <div
+                  className="w-full h-3 rounded-full"
+                  style={{ background: 'linear-gradient(to right, #ef4444 0%, #eab308 50%, #22c55e 100%)' }}
+                />
+                {/* Marcador de posición */}
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-5 rounded bg-white shadow-lg border-2 border-gray-800"
+                  style={{ left: `clamp(0px, calc(${score}% - 6px), calc(100% - 12px))` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 -mt-0.5">
+                <span>← Alto riesgo</span>
+                <span>Bajo riesgo →</span>
               </div>
               <p className={`text-sm font-medium ${sc!.text}`}>{sc!.label}</p>
             </>

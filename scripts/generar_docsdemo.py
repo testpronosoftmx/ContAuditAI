@@ -16,9 +16,17 @@ except ImportError:
     PDF_ENABLED = False
     print("Reportlab no está instalado. El PDF no se generará. Para generarlo ejecuta: pip install reportlab")
 
+import glob
+
 OUTPUT_DIR = "docsdemo"
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
+else:
+    for f in glob.glob(os.path.join(OUTPUT_DIR, "*")):
+        try:
+            os.remove(f)
+        except OSError:
+            pass
 
 EMISOR_RFC = "DEMO123456XYZ"
 EMISOR_NOMBRE = "EMPRESA DEMO SA DE CV"

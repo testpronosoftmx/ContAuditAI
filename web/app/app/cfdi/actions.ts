@@ -81,6 +81,17 @@ function parseCFDI(xml: string): { cfdi: CfdiRow; crp?: Omit<CrpRow, 'tenant_id'
   }
 }
 
+export async function reinicializarCFDIs(): Promise<{ error?: string }> {
+  const supabase = await createClient()
+
+  const { error } = await supabase.rpc('reinicializar_cfdis')
+  if (error) return { error: error.message }
+
+  revalidatePath('/app/cfdi')
+  revalidatePath('/app/dashboard')
+  return {}
+}
+
 export async function subirCFDIs(
   _prev: UploadState,
   formData: FormData,
