@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="F" Folio="13" Fecha="2026-05-27T05:20:14" Total="10318.36" SubTotal="8895.14" Moneda="MXN" TipoDeComprobante="I" MetodoPago="PUE" FormaPago="03" LugarExpedicion="10000">
+	<cfdi:Emisor Rfc="DEMO123456XYZ" Nombre="EMPRESA DEMO SA DE CV" RegimenFiscal="601" />
+	<cfdi:Receptor Rfc="REC223189ABC" Nombre="CLIENTE 13 SA DE CV" UsoCFDI="G03" RegimenFiscalReceptor="601" DomicilioFiscalReceptor="20000" />
+	<cfdi:Conceptos>
+		<cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="E48" Descripcion="Honorarios legales y corporativos" ValorUnitario="8895.14" Importe="8895.14" ObjetoImp="02" />
+	</cfdi:Conceptos>
+	<cfdi:Impuestos TotalImpuestosTrasladados="1423.22">
+		<cfdi:Traslados>
+			<cfdi:Traslado Base="8895.14" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1423.22" />
+		</cfdi:Traslados>
+	</cfdi:Impuestos>
+	<cfdi:Complemento>
+		<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" UUID="09A755CE-BEE8-4666-9DD8-1DC4A1D6F689" />
+	</cfdi:Complemento>
+</cfdi:Comprobante>

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="F" Folio="43" Fecha="2026-05-14T06:48:05" Total="13034.42" SubTotal="11236.57" Moneda="MXN" TipoDeComprobante="I" MetodoPago="PUE" FormaPago="03" LugarExpedicion="10000">
+	<cfdi:Emisor Rfc="DEMO123456XYZ" Nombre="EMPRESA DEMO SA DE CV" RegimenFiscal="601" />
+	<cfdi:Receptor Rfc="REC549186ABC" Nombre="CLIENTE 43 SA DE CV" UsoCFDI="G03" RegimenFiscalReceptor="601" DomicilioFiscalReceptor="20000" />
+	<cfdi:Conceptos>
+		<cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="E48" Descripcion="Soporte técnico de infraestructura" ValorUnitario="11236.57" Importe="11236.57" ObjetoImp="02" />
+	</cfdi:Conceptos>
+	<cfdi:Impuestos TotalImpuestosTrasladados="1797.85">
+		<cfdi:Traslados>
+			<cfdi:Traslado Base="11236.57" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1797.85" />
+		</cfdi:Traslados>
+	</cfdi:Impuestos>
+	<cfdi:Complemento>
+		<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" UUID="E98B80A7-F427-44A2-A3C5-3BF066C93AE8" />
+	</cfdi:Complemento>
+</cfdi:Comprobante>

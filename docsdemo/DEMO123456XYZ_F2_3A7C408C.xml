@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="F" Folio="2" Fecha="2026-05-15T22:21:49" Total="19143.46" SubTotal="16502.98" Moneda="MXN" TipoDeComprobante="I" MetodoPago="PUE" FormaPago="03" LugarExpedicion="10000">
+	<cfdi:Emisor Rfc="DEMO123456XYZ" Nombre="EMPRESA DEMO SA DE CV" RegimenFiscal="601" />
+	<cfdi:Receptor Rfc="REC374253ABC" Nombre="CLIENTE 2 SA DE CV" UsoCFDI="G03" RegimenFiscalReceptor="601" DomicilioFiscalReceptor="20000" />
+	<cfdi:Conceptos>
+		<cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="E48" Descripcion="Estrategia de marketing digital" ValorUnitario="16502.98" Importe="16502.98" ObjetoImp="02" />
+	</cfdi:Conceptos>
+	<cfdi:Impuestos TotalImpuestosTrasladados="2640.48">
+		<cfdi:Traslados>
+			<cfdi:Traslado Base="16502.98" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="2640.48" />
+		</cfdi:Traslados>
+	</cfdi:Impuestos>
+	<cfdi:Complemento>
+		<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" UUID="3A7C408C-6D38-4D49-A2B9-8FCFDBF5018D" />
+	</cfdi:Complemento>
+</cfdi:Comprobante>
