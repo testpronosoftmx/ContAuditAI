@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import BancoUpload from '@/components/app/BancoUpload'
+import ReinicializarBtn from '@/components/app/ReinicializarBtn'
+import { reinicializarBanco } from '@/app/app/banco/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,9 +16,16 @@ export default async function BancoPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold">Banco / SPEI</h1>
-        <p className="text-sm text-gray-400 mt-1">Importa tu estado de cuenta para conciliar con CFDIs</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Banco / SPEI</h1>
+          <p className="text-sm text-gray-400 mt-1">Importa tu estado de cuenta para conciliar con CFDIs</p>
+        </div>
+        <ReinicializarBtn
+          label="Reinicializar banco"
+          confirmText="¿Borrar todas las transacciones y análisis?"
+          action={reinicializarBanco}
+        />
       </div>
 
       <BancoUpload />

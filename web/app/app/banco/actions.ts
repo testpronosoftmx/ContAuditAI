@@ -45,6 +45,15 @@ function parseCSV(text: string): TxRow[] {
   return rows
 }
 
+export async function reinicializarBanco(): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('reinicializar_banco')
+  if (error) return { error: error.message }
+  revalidatePath('/app/banco')
+  revalidatePath('/app/dashboard')
+  return {}
+}
+
 export async function subirBanco(
   _prev: BancoState,
   formData: FormData,

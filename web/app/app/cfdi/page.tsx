@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import CFDIUpload from '@/components/app/CFDIUpload'
 import ReinicializarBtn from '@/components/app/ReinicializarBtn'
+import { reinicializarCFDIs } from '@/app/app/cfdi/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +23,11 @@ export default async function CfdiPage() {
           <h1 className="text-2xl font-bold">CFDIs</h1>
           <p className="text-sm text-gray-400 mt-1">Importa y analiza tus comprobantes fiscales</p>
         </div>
-        <ReinicializarBtn />
+        <ReinicializarBtn
+          label="Reinicializar XMLs"
+          confirmText="¿Borrar todos los XMLs y análisis?"
+          action={reinicializarCFDIs}
+        />
       </div>
 
       <CFDIUpload />

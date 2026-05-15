@@ -80,13 +80,13 @@ mayo_end = datetime(2026, 5, 20)
 
 print("Generando MEGA DATASET con vínculos UUID...")
 
-# 1. MATCHES PERFECTOS (30)
+# 1. MATCHES PERFECTOS (30) — UUID del CFDI en concepto y referencia bancaria
 for i in range(30):
     fecha = random_date(abril_start, mayo_end)
     folio = f"V-PERF-{i}"
     monto = round(random.uniform(1000, 5000), 2)
-    generate_xml(USER_RFC, USER_NOMBRE, "CLI001", "CLIENTE OK", monto, fecha, folio)
-    movimientos_banco.append({'Fecha': fecha, 'Concepto': f"PAGO {folio}", 'Referencia': folio, 'Abono': monto, 'Cargo': 0})
+    uuid_perf = generate_xml(USER_RFC, USER_NOMBRE, "CLI001", "CLIENTE OK", monto, fecha, folio)
+    movimientos_banco.append({'Fecha': fecha, 'Concepto': f"SPEI {uuid_perf}", 'Referencia': uuid_perf, 'Abono': monto, 'Cargo': 0})
 
 # 2. DIFERENCIA CENTAVOS (3)
 for i in range(3):

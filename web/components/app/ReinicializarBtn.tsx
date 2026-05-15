@@ -1,16 +1,21 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { reinicializarCFDIs } from '@/app/app/cfdi/actions'
 
-export default function ReinicializarBtn() {
+type Props = {
+  label: string
+  confirmText: string
+  action: () => Promise<{ error?: string }>
+}
+
+export default function ReinicializarBtn({ label, confirmText, action }: Props) {
   const [confirm, setConfirm] = useState(false)
   const [error, setError]     = useState<string | null>(null)
   const [isPending, start]    = useTransition()
 
   function handleConfirm() {
     start(async () => {
-      const res = await reinicializarCFDIs()
+      const res = await action()
       if (res.error) { setError(res.error); setConfirm(false) }
       else { setConfirm(false); setError(null) }
     })
@@ -19,7 +24,7 @@ export default function ReinicializarBtn() {
   if (confirm) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-xs text-red-400">¿Borrar todos los XMLs y análisis?</span>
+        <span className="text-xs text-red-400">{confirmText}</span>
         <button
           onClick={handleConfirm}
           disabled={isPending}
@@ -45,7 +50,7 @@ export default function ReinicializarBtn() {
       className="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-semibold text-red-400
                  hover:bg-red-500/10 transition-colors"
     >
-      Reinicializar XMLs
+      {label}
     </button>
   )
 }
