@@ -10,7 +10,7 @@ const navLinks = [
   { href: '/app/banco',           label: 'Banco / SPEI' },
   { href: '/app/conciliaciones',  label: 'Conciliaciones' },
   { href: '/app/alertas',         label: 'Alertas' },
-  { href: '/app/vault',           label: 'Vault' },
+  { href: '/app/vault',           label: 'Evidencias' },
 ]
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {

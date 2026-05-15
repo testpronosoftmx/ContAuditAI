@@ -22,14 +22,19 @@ type Cfdi = {
   tipo_comprobante: string
 }
 
+const CHIP: Record<string, { label: string; cls: string }> = {
+  EFOS_DETECTADO:        { label: 'EFOS',         cls: 'bg-red-500/20 text-red-400' },
+  MATERIALIDAD_FALTANTE: { label: 'Materialidad',  cls: 'bg-yellow-500/20 text-yellow-400' },
+}
+
 export default function VaultCfdiPanel({
   cfdi,
-  tieneAlerta,
+  tiposAlerta,
   evidencias: initialEvidencias,
   autoExpand = false,
 }: {
   cfdi: Cfdi
-  tieneAlerta: boolean
+  tiposAlerta: string[]
   evidencias: Evidencia[]
   autoExpand?: boolean
 }) {
@@ -90,13 +95,17 @@ export default function VaultCfdiPanel({
       >
         <div className="flex items-center gap-4 min-w-0">
           <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-xs font-mono text-gray-400 truncate">{cfdi.uuid.toUpperCase()}</span>
-              {tieneAlerta && (
-                <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 tracking-widest uppercase">
-                  Alerta
-                </span>
-              )}
+              {tiposAlerta.map(tipo => {
+                const chip = CHIP[tipo]
+                if (!chip) return null
+                return (
+                  <span key={tipo} className={`shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded-full tracking-widest uppercase ${chip.cls}`}>
+                    {chip.label}
+                  </span>
+                )
+              })}
             </div>
             <div className="flex items-center gap-3 mt-0.5">
               <span className="text-xs text-gray-300">{cfdi.rfc_emisor}</span>
@@ -106,7 +115,7 @@ export default function VaultCfdiPanel({
               <span className="text-xs font-semibold text-white">{total}</span>
             </div>
             {cfdi.concepto && (
-              <span className="text-[11px] text-indigo-300 truncate mt-0.5">"{cfdi.concepto}"</span>
+              <span className="text-[11px] text-indigo-300 truncate mt-0.5">&ldquo;{cfdi.concepto}&rdquo;</span>
             )}
           </div>
         </div>

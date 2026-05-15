@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   icons: { icon: '/favicon.ico' },
   openGraph: {
     title: "ContAuditAI — Pre-Auditoría Fiscal SAT México",
-    description: "Motor de reconciliación CFDI 4.0 con alertas fiscales, Risk Score y Vault de Materialidad.",
+    description: "Motor de reconciliación CFDI 4.0 con alertas fiscales, Risk Score y Evidencias Documentales.",
     locale: "es_MX",
     type: "website",
   },

@@ -26,12 +26,12 @@ export default async function VaultPage({
   if (!PLANES[plan].vault) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-bold">Vault de Materialidad</h1>
+        <h1 className="text-2xl font-bold">Evidencias Documentales</h1>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center flex flex-col gap-3">
           <p className="text-4xl">🔒</p>
           <p className="text-white font-semibold">Disponible en plan Plata u Oro</p>
           <p className="text-sm text-gray-400">
-            Adjunta contratos, cotizaciones y evidencia de entrega por CFDI para cumplir Art. 49-Bis CFF.
+            Adjunta contratos, cotizaciones y entregables por CFDI para demostrar materialidad ante el SAT — Art. 49-Bis CFF · Art. 69-B CFF.
           </p>
         </div>
       </div>
@@ -44,9 +44,9 @@ export default async function VaultPage({
   const [{ data: cfdisConAlerta }, { data: evidencias }] = await Promise.all([
     supabase
       .from('alertas_riesgo')
-      .select('uuid_referencia')
+      .select('uuid_referencia, tipo_alerta')
       .eq('estado', 'Pendiente')
-      .eq('tipo_alerta', 'MATERIALIDAD_FALTANTE')
+      .in('tipo_alerta', ['MATERIALIDAD_FALTANTE', 'EFOS_DETECTADO'])
       .not('uuid_referencia', 'is', null),
     supabase
       .from('materialidad_evidencias')
@@ -55,10 +55,16 @@ export default async function VaultPage({
       .order('created_at', { ascending: false }),
   ])
 
-  // UUIDs únicos con alerta
-  const uuidsConAlerta = [...new Set(
-    (cfdisConAlerta ?? []).map(a => a.uuid_referencia as string).filter(Boolean)
-  )]
+  // Mapa uuid → tipos de alerta (para chips)
+  const alertasPorUuid = new Map<string, string[]>()
+  for (const a of cfdisConAlerta ?? []) {
+    const uuid = a.uuid_referencia as string
+    if (!alertasPorUuid.has(uuid)) alertasPorUuid.set(uuid, [])
+    if (!alertasPorUuid.get(uuid)!.includes(a.tipo_alerta)) {
+      alertasPorUuid.get(uuid)!.push(a.tipo_alerta)
+    }
+  }
+  const uuidsConAlerta = [...alertasPorUuid.keys()]
 
   // UUIDs únicos con evidencia
   const uuidsConEvidencia = [...new Set(
@@ -90,9 +96,9 @@ export default async function VaultPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">Vault de Materialidad</h1>
+        <h1 className="text-2xl font-bold">Evidencias Documentales</h1>
         <p className="text-sm text-gray-400 mt-1">
-          Adjunta evidencia documental por CFDI — Art. 49-Bis CFF
+          Respaldo documental por CFDI ante el SAT — Art. 49-Bis CFF · Art. 69-B CFF
         </p>
       </div>
 
@@ -106,7 +112,7 @@ export default async function VaultPage({
             <VaultCfdiPanel
               key={cfdi.uuid}
               cfdi={cfdi}
-              tieneAlerta={uuidsConAlerta.includes(cfdi.uuid)}
+              tiposAlerta={alertasPorUuid.get(cfdi.uuid) ?? []}
               evidencias={evidenciasPorCfdi.get(cfdi.uuid) ?? []}
               autoExpand={autoUuid?.toLowerCase() === cfdi.uuid.toLowerCase()}
             />

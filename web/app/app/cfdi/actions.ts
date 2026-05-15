@@ -34,7 +34,6 @@ type UploadState = {
   error?: string
 }
 
-const init: UploadState = {}
 
 function attr(xml: string, name: string): string {
   const m = xml.match(new RegExp(`\\b${name}="([^"]*)"`, 'i'))

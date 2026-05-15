@@ -216,7 +216,7 @@ export default function AlertaItem({ alerta }: { alerta: Alerta }) {
               </div>
             )}
 
-            {/* Vault shortcut para alertas con UUID */}
+            {/* Shortcut a Evidencias para alertas con UUID */}
             {alerta.uuid_referencia && alerta.estado === 'Pendiente' && (
               <a
                 href={`/app/vault?uuid=${alerta.uuid_referencia}`}
@@ -224,7 +224,7 @@ export default function AlertaItem({ alerta }: { alerta: Alerta }) {
                            bg-indigo-500/10 py-2.5 text-sm text-indigo-300
                            hover:bg-indigo-500/20 transition-colors"
               >
-                📎 Adjuntar evidencia en Vault
+                📎 Adjuntar evidencia
               </a>
             )}
 

@@ -19,9 +19,7 @@ type ConciliacionRowProps = {
 }
 
 export default function ConciliacionRow({
-  id,
   cfdi_uuid,
-  monto_aplicado,
   confianza,
   cfdi_fecha,
   cfdi_rfc_emisor,

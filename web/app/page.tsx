@@ -30,8 +30,8 @@ const features = [
   },
   {
     icon: '🗂️',
-    title: 'Vault de Materialidad',
-    desc: 'Archiva contratos, bitácoras y entregables para facturas ≥ $20,000. Evidencia de operaciones reales ante Art. 49-Bis CFF.',
+    title: 'Evidencias Documentales',
+    desc: 'Archiva contratos, bitácoras y entregables por CFDI. Demuestra materialidad ante el SAT para EFOS (Art. 69-B) y operaciones ≥ $20,000 (Art. 49-Bis CFF).',
   },
   {
     icon: '❌',
@@ -89,7 +89,7 @@ const planes = [
       'Conciliación CFDI ↔ SPEI',
       'Detección EFOS/EDOS',
       'Dashboard con charts',
-      'Vault de Materialidad',
+      'Evidencias Documentales',
       'Carga masiva de XMLs',
       'Soporte por correo',
     ],
@@ -115,7 +115,7 @@ const planes = [
       'Conciliación CFDI ↔ SPEI',
       'Detección EFOS/EDOS',
       'Dashboard con charts',
-      'Vault de Materialidad (Art. 49-Bis)',
+      'Evidencias Documentales (Art. 49-Bis · 69-B)',
       'Carga masiva de XMLs y CSV',
       'Soporte por correo',
     ],
@@ -141,7 +141,7 @@ const planes = [
       'Conciliación CFDI ↔ SPEI',
       'Detección EFOS/EDOS',
       'Dashboard con charts',
-      'Vault de Materialidad (Art. 49-Bis)',
+      'Evidencias Documentales (Art. 49-Bis · 69-B)',
       'Carga masiva de XMLs y CSV',
       'Soporte prioritario',
       'Verificación de estatus SAT (próximamente)',
@@ -155,7 +155,7 @@ const steps = [
   { n: '01', title: 'Sube tus XMLs y CSV bancario', desc: 'Carga masiva de CFDIs descargados del SAT y tu estado de cuenta en formato CSV del banco.' },
   { n: '02', title: 'El motor analiza en segundos', desc: 'El engine SQL cruza proveedores con EFOS, valida PPD/CRP, detecta cancelaciones y concilia depósitos SPEI.' },
   { n: '03', title: 'Recibe alertas con contexto legal', desc: 'Cada alerta incluye: descripción del riesgo, acción recomendada y referencia al artículo aplicable del CFF/LISR/LIVA.' },
-  { n: '04', title: 'Resuelve o documenta evidencia', desc: 'Marca alertas como Resuelto o sube evidencia de materialidad al Vault. El Risk Score se actualiza automáticamente.' },
+  { n: '04', title: 'Resuelve o documenta evidencia', desc: 'Marca alertas como Resuelto o adjunta evidencia en el Expediente de Evidencias. El Risk Score se actualiza automáticamente.' },
 ]
 
 /* ─── Componentes internos ──────────────────────────────────── */
