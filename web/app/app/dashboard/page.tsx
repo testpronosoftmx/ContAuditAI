@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import AnalisisBtn from '@/components/app/AnalisisBtn'
 import RiskScoreChart from '@/components/app/RiskScoreChart'
+import CfdiTipoChart from '@/components/app/CfdiTipoChart'
+import CfdiMensualChart from '@/components/app/CfdiMensualChart'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -24,14 +26,36 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: riskData }, { data: historial }, { data: alertas }, { count: cfdisCount }, { count: txCount }] =
+  const [{ data: riskData }, { data: historial }, { data: alertas }, { count: cfdisCount }, { count: txCount }, { data: cfdiRaw }] =
     await Promise.all([
       supabase.from('risk_scores').select('score, factores, periodo').order('periodo', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('risk_scores').select('score, periodo').order('periodo', { ascending: true }).limit(6),
       supabase.from('alertas_riesgo').select('id, tipo_alerta, severidad, descripcion').eq('estado', 'Pendiente').order('severidad', { ascending: true }).limit(5),
       supabase.from('cfdi_comprobantes').select('*', { count: 'exact', head: true }),
       supabase.from('transacciones_bancarias').select('*', { count: 'exact', head: true }),
+      supabase.from('cfdi_comprobantes').select('tipo_comprobante, total, fecha_emision'),
     ])
+
+  // --- Agrupación para gráficas ---
+  const TIPO_NOMBRE: Record<string, string> = { I: 'Ingreso', E: 'Egreso', P: 'Pago', N: 'Nómina', T: 'Traslado' }
+
+  const tipoMap = new Map<string, { count: number; monto: number }>()
+  const mensualMap = new Map<string, { ingreso: number; egreso: number }>()
+
+  for (const c of cfdiRaw ?? []) {
+    const nombre = TIPO_NOMBRE[c.tipo_comprobante] ?? c.tipo_comprobante
+    const monto  = Number(c.total) || 0
+    const t = tipoMap.get(nombre) ?? { count: 0, monto: 0 }
+    tipoMap.set(nombre, { count: t.count + 1, monto: t.monto + monto })
+
+    const mes = new Date(c.fecha_emision).toLocaleDateString('es-MX', { month: 'short', year: '2-digit' })
+    const m = mensualMap.get(mes) ?? { ingreso: 0, egreso: 0 }
+    if (c.tipo_comprobante === 'I') mensualMap.set(mes, { ...m, ingreso: m.ingreso + monto })
+    if (c.tipo_comprobante === 'E') mensualMap.set(mes, { ...m, egreso: m.egreso + monto })
+  }
+
+  const cfdiTipoData = Array.from(tipoMap.entries()).map(([name, v]) => ({ name, value: v.count, monto: v.monto }))
+  const cfdiMensualData = Array.from(mensualMap.entries()).map(([mes, v]) => ({ mes, ...v }))
 
   const score    = riskData?.score != null ? Number(riskData.score) : null
   const factores = riskData?.factores as Record<string, number> | null
@@ -93,6 +117,20 @@ export default async function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Gráficas de CFDIs */}
+      {(cfdiRaw?.length ?? 0) > 0 && (
+        <div className="grid lg:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
+            <h2 className="font-semibold text-sm">CFDIs por tipo</h2>
+            <CfdiTipoChart data={cfdiTipoData} />
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
+            <h2 className="font-semibold text-sm">Ingreso vs Egreso por mes</h2>
+            <CfdiMensualChart data={cfdiMensualData} />
+          </div>
+        </div>
+      )}
 
       {/* Historial de scores (si hay más de 1 mes) */}
       {(historial?.length ?? 0) > 1 && (
