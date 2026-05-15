@@ -44,16 +44,6 @@ export default async function AlertasPage({
 
   const { data: raw } = await query.limit(200)
 
-  // Fetch concepto for each alerta that has a uuid_referencia
-  const uuids = [...new Set((raw ?? []).map(a => a.uuid_referencia).filter(Boolean))]
-  const { data: cfdis } = uuids.length
-    ? await supabase
-        .from('cfdi_comprobantes')
-        .select('uuid, concepto')
-        .in('uuid', uuids)
-    : { data: [] }
-  const conceptoMap = new Map((cfdis ?? []).map(c => [c.uuid, c.concepto as string | null]))
-
   // Pendientes: ordenar CRITICA → MEDIA → BAJA
   const alertas = filtro === 'todas'
     ? [...(raw ?? [])].sort((a, b) => (SEV_ORDER[a.severidad] ?? 9) - (SEV_ORDER[b.severidad] ?? 9))
@@ -90,13 +80,7 @@ export default async function AlertasPage({
             No hay alertas en esta categoría.
           </p>
         ) : (
-          alertas!.map(a => (
-            <AlertaItem
-              key={a.id}
-              alerta={a}
-              concepto={a.uuid_referencia ? (conceptoMap.get(a.uuid_referencia) ?? null) : null}
-            />
-          ))
+          alertas!.map(a => <AlertaItem key={a.id} alerta={a} />)
         )}
       </div>
     </div>
