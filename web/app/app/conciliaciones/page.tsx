@@ -1,10 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import ConciliacionRow from '@/components/app/ConciliacionRow'
+import { getPlan, PLANES } from '@/lib/plans'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ConciliacionesPage() {
   const supabase = await createClient()
+
+  const { data: tenantUser } = await supabase
+    .from('tenant_users')
+    .select('tenants(plan)')
+    .eq('activo', true)
+    .limit(1)
+    .maybeSingle()
+  const plan = getPlan((tenantUser?.tenants as { plan?: string } | null)?.plan ?? 'gratis')
+  const puedeExportar = PLANES[plan].reportes
 
   const [{ data: cons }, { count: totalCfdis }] = await Promise.all([
     supabase
@@ -39,9 +49,24 @@ export default async function ConciliacionesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold">Conciliaciones</h1>
-        <p className="text-sm text-gray-400 mt-1">Pares Factura ↔ Depósito bancario identificados por el motor</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Conciliaciones</h1>
+          <p className="text-sm text-gray-400 mt-1">Pares Factura ↔ Depósito bancario identificados por el motor</p>
+        </div>
+        {puedeExportar ? (
+          <a
+            href="/api/export/conciliaciones"
+            className="shrink-0 rounded-lg border border-white/10 px-4 py-2 text-xs text-gray-300
+                       hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
+          >
+            ↓ Exportar Excel
+          </a>
+        ) : (
+          <span className="shrink-0 rounded-lg border border-white/10 px-4 py-2 text-xs text-gray-600 cursor-not-allowed">
+            ↓ Exportar (Plata+)
+          </span>
+        )}
       </div>
 
       {/* KPIs */}

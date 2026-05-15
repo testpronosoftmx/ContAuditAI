@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { PLANES, getPlan } from '@/lib/plans'
 
 type CfdiRow = {
   uuid: string
@@ -109,6 +110,37 @@ export async function subirCFDIs(
   const archivos = formData.getAll('xmls') as File[]
   if (!archivos.length) return { error: 'No seleccionaste ningún archivo.' }
 
+  const supabase = await createClient()
+
+  // Verificar límite del plan
+  const { data: tenantUser } = await supabase
+    .from('tenant_users')
+    .select('tenants(plan)')
+    .eq('activo', true)
+    .limit(1)
+    .maybeSingle()
+
+  const plan   = getPlan((tenantUser?.tenants as { plan?: string } | null)?.plan ?? 'gratis')
+  const limite = PLANES[plan].cfdis_mes
+
+  if (limite !== Infinity) {
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+    const { count: usado } = await supabase
+      .from('cfdi_comprobantes')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', startOfMonth.toISOString())
+
+    const disponibles = limite - (usado ?? 0)
+    if (disponibles <= 0) {
+      return { error: `Límite de ${limite} CFDIs/mes alcanzado (plan ${PLANES[plan].nombre}). Actualiza tu plan para continuar.` }
+    }
+    if (archivos.length > disponibles) {
+      return { error: `Solo puedes subir ${disponibles} CFDIs más este mes (plan ${PLANES[plan].nombre}, límite ${limite}).` }
+    }
+  }
+
   const cfdis: CfdiRow[] = []
   const crps:  Omit<CrpRow, 'tenant_id'>[] = []
   const errores: string[] = []
@@ -127,8 +159,6 @@ export async function subirCFDIs(
   if (!cfdis.length) {
     return { error: 'Ningún archivo pudo parsearse como CFDI 4.0.', errores }
   }
-
-  const supabase = await createClient()
 
   const { data: insertados, error: rpcError } = await supabase
     .rpc('insertar_cfdis', { p_cfdis: cfdis })
