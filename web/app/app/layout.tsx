@@ -3,15 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { PLANES, getPlan } from '@/lib/plans'
-
-const navLinks = [
-  { href: '/app/dashboard',       label: 'Dashboard' },
-  { href: '/app/cfdi',            label: 'CFDIs' },
-  { href: '/app/banco',           label: 'Banco / SPEI' },
-  { href: '/app/conciliaciones',  label: 'Conciliaciones' },
-  { href: '/app/alertas',         label: 'Alertas' },
-  { href: '/app/vault',           label: 'Evidencias' },
-]
+import NavLinks from '@/components/app/NavLinks'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -54,17 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <span className="text-sm font-bold tracking-tight">ContAuditAI</span>
         </Link>
 
-        <nav className="flex flex-col gap-1">
-          {navLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="rounded-lg px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
+        <NavLinks />
 
         <div className="mt-auto flex flex-col gap-3">
           {tenant && (
@@ -72,7 +54,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-white truncate">{tenant.nombre}</p>
-                  <p className="text-xs text-gray-500 font-mono">{tenant.rfc_empresa}</p>
+                  {tenant.rfc_empresa !== tenant.nombre && (
+                    <p className="text-xs text-gray-500 font-mono">{tenant.rfc_empresa}</p>
+                  )}
                 </div>
                 <span className={`text-[9px] font-black px-2 py-0.5 rounded-full tracking-widest uppercase shrink-0 ${plano.badge}`}>
                   {plano.nombre}
