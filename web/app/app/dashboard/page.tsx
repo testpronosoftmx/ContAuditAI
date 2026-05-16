@@ -3,6 +3,9 @@ import AnalisisBtn from '@/components/app/AnalisisBtn'
 import RiskScoreChart from '@/components/app/RiskScoreChart'
 import CfdiTipoChart from '@/components/app/CfdiTipoChart'
 import CfdiMensualChart from '@/components/app/CfdiMensualChart'
+import TopProveedoresWidget from '@/components/app/TopProveedoresWidget'
+import MaterialidadWidget from '@/components/app/MaterialidadWidget'
+import DeducibilidadWidget from '@/components/app/DeducibilidadWidget'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -42,18 +45,67 @@ export default async function DashboardPage() {
     { data: cfdiRaw },
     { count: conciliadasCount },
     { data: tenantData },
+    { data: efosAlerts },
+    { count: matPendienteCount },
+    { data: evidenciasData },
+    { data: ppdSinCrpAlerts },
   ] = await Promise.all([
     supabase.from('risk_scores').select('score, factores, periodo').order('periodo', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('risk_scores').select('score, periodo').order('periodo', { ascending: true }).limit(6),
     supabase.from('alertas_riesgo').select('id, tipo_alerta, severidad, descripcion').eq('estado', 'Pendiente').order('created_at', { ascending: false }).limit(20),
     supabase.from('cfdi_comprobantes').select('*', { count: 'exact', head: true }),
     supabase.from('transacciones_bancarias').select('*', { count: 'exact', head: true }),
-    supabase.from('cfdi_comprobantes').select('tipo_comprobante, total, fecha_emision'),
+    supabase.from('cfdi_comprobantes').select('uuid, tipo_comprobante, total, fecha_emision, rfc_emisor, metodo_pago'),
     supabase.from('conciliaciones').select('*', { count: 'exact', head: true }).eq('confianza', 'ALTA'),
     supabase.from('tenant_users').select('tenants(nombre, rfc_empresa)').eq('activo', true).limit(1).maybeSingle(),
+    supabase.from('alertas_riesgo').select('uuid_referencia').eq('tipo_alerta', 'EFOS_DETECTADO').eq('estado', 'Pendiente'),
+    supabase.from('alertas_riesgo').select('*', { count: 'exact', head: true }).eq('tipo_alerta', 'MATERIALIDAD_FALTANTE').eq('estado', 'Pendiente'),
+    supabase.from('materialidad_evidencias').select('cfdi_uuid'),
+    supabase.from('alertas_riesgo').select('uuid_referencia').eq('tipo_alerta', 'PPD_SIN_CRP').eq('estado', 'Pendiente'),
   ])
 
   const tenant = (tenantData?.tenants as unknown as { nombre: string; rfc_empresa: string } | null)
+
+  const tenantRfc = tenant?.rfc_empresa ?? ''
+
+  // ── Widget 1: Top Proveedores + EFOS ─────────────────────────
+  const efosUuids = new Set((efosAlerts ?? []).map(a => a.uuid_referencia).filter(Boolean))
+  const efosRfcs  = new Set(
+    (cfdiRaw ?? []).filter(c => efosUuids.has(c.uuid)).map(c => c.rfc_emisor)
+  )
+  const provMap = new Map<string, { total: number; facturas: number }>()
+  for (const c of cfdiRaw ?? []) {
+    if (c.tipo_comprobante !== 'I' || c.rfc_emisor === tenantRfc) continue
+    const prev = provMap.get(c.rfc_emisor) ?? { total: 0, facturas: 0 }
+    provMap.set(c.rfc_emisor, { total: prev.total + (Number(c.total) || 0), facturas: prev.facturas + 1 })
+  }
+  const topProveedores = Array.from(provMap.entries())
+    .map(([rfc, v]) => ({ rfc, ...v, esEfos: efosRfcs.has(rfc) }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5)
+
+  // ── Widget 2: Semáforo Materialidad ──────────────────────────
+  const matPendiente    = matPendienteCount ?? 0
+  const matDocumentadas = new Set((evidenciasData ?? []).map(e => e.cfdi_uuid)).size
+
+  // ── Widget 3: Deducibilidad PUE vs PPD ───────────────────────
+  const ppdSinCrpUuids = new Set((ppdSinCrpAlerts ?? []).map(a => a.uuid_referencia).filter(Boolean))
+  const deducibilidad = {
+    pue:       { count: 0, monto: 0 },
+    ppdConCrp: { count: 0, monto: 0 },
+    ppdSinCrp: { count: 0, monto: 0 },
+  }
+  for (const c of cfdiRaw ?? []) {
+    if (c.tipo_comprobante !== 'I' || c.rfc_emisor === tenantRfc) continue
+    const monto = Number(c.total) || 0
+    if (c.metodo_pago === 'PUE') {
+      deducibilidad.pue.count++; deducibilidad.pue.monto += monto
+    } else if (ppdSinCrpUuids.has(c.uuid)) {
+      deducibilidad.ppdSinCrp.count++; deducibilidad.ppdSinCrp.monto += monto
+    } else {
+      deducibilidad.ppdConCrp.count++; deducibilidad.ppdConCrp.monto += monto
+    }
+  }
 
   const tipoMap    = new Map<string, { count: number; monto: number }>()
   const mensualMap = new Map<string, { ingreso: number; egreso: number }>()
@@ -218,6 +270,37 @@ export default async function DashboardPage() {
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
             <h2 className="font-semibold text-sm">Ingreso vs Egreso por mes</h2>
             <CfdiMensualChart data={cfdiMensualData} />
+          </div>
+        </div>
+      )}
+
+      {/* Análisis Fiscal Avanzado */}
+      {!isEmpty && (
+        <div className="grid lg:grid-cols-3 gap-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
+            <div>
+              <h2 className="font-semibold text-sm">Top 5 Proveedores</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Por monto facturado · EFOS marcado en rojo</p>
+            </div>
+            <TopProveedoresWidget data={topProveedores} />
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
+            <div>
+              <h2 className="font-semibold text-sm">Blindaje de Materialidad</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Facturas de alto valor con evidencia</p>
+            </div>
+            <MaterialidadWidget documentadas={matDocumentadas} pendientes={matPendiente} />
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
+            <div>
+              <h2 className="font-semibold text-sm">Estatus de Deducibilidad</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Egresos clasificados por riesgo IVA</p>
+            </div>
+            <DeducibilidadWidget
+              pue={deducibilidad.pue}
+              ppdConCrp={deducibilidad.ppdConCrp}
+              ppdSinCrp={deducibilidad.ppdSinCrp}
+            />
           </div>
         </div>
       )}
