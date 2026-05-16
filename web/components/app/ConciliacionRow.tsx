@@ -105,8 +105,8 @@ export default function ConciliacionRow({
                   <p className="text-xs text-indigo-300 leading-relaxed">
                     El motor de conciliación identificó que este CFDI corresponde al depósito bancario mostrado.
                     {confianza === 'ALTA'
-                      ? ' El UUID de la factura aparece directamente en la referencia del banco (match exacto).'
-                      : ' El monto y la fecha son compatibles, pero no hay UUID explícito en la referencia bancaria (match aproximado).'}
+                      ? ' El UUID de la factura aparece directamente en la referencia del banco — match exacto y confirmado.'
+                      : ' Se detectó un pago parcial (50–99% del monto) en la fecha esperada, pero sin UUID en la referencia. Verifica si hay un CRP pendiente o si el cliente tiene saldo restante.'}
                   </p>
                 </div>
 

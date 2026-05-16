@@ -4,14 +4,15 @@ import { getPlan, PLANES } from '@/lib/plans'
 
 export const dynamic = 'force-dynamic'
 
-type Filtro = 'todas' | 'criticas' | 'medias' | 'bajas' | 'resueltas'
+type Filtro = 'todas' | 'criticas' | 'medias' | 'bajas' | 'discrepancias' | 'resueltas'
 
 const TABS: { key: Filtro; label: string }[] = [
-  { key: 'todas',     label: 'Pendientes' },
-  { key: 'criticas',  label: 'Críticas'   },
-  { key: 'medias',    label: 'Medias'     },
-  { key: 'bajas',     label: 'Bajas'      },
-  { key: 'resueltas', label: 'Resueltas'  },
+  { key: 'todas',         label: 'Pendientes'   },
+  { key: 'criticas',      label: 'Críticas'     },
+  { key: 'medias',        label: 'Medias'       },
+  { key: 'bajas',         label: 'Bajas'        },
+  { key: 'discrepancias', label: 'En revisión'  },
+  { key: 'resueltas',     label: 'Resueltas'    },
 ]
 
 const SEV_ORDER: Record<string, number> = { CRITICA: 0, MEDIA: 1, BAJA: 2 }
@@ -48,6 +49,8 @@ export default async function AlertasPage({
     query = query.eq('estado', 'Pendiente').eq('severidad', 'MEDIA')
   } else if (filtro === 'bajas') {
     query = query.eq('estado', 'Pendiente').eq('severidad', 'BAJA')
+  } else if (filtro === 'discrepancias') {
+    query = query.eq('estado', 'Pendiente').eq('tipo_alerta', 'DISCREPANCIA_BANCARIA')
   } else {
     query = query.eq('estado', 'Pendiente')
   }

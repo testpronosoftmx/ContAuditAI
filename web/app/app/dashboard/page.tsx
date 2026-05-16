@@ -49,7 +49,7 @@ export default async function DashboardPage() {
     supabase.from('cfdi_comprobantes').select('*', { count: 'exact', head: true }),
     supabase.from('transacciones_bancarias').select('*', { count: 'exact', head: true }),
     supabase.from('cfdi_comprobantes').select('tipo_comprobante, total, fecha_emision'),
-    supabase.from('conciliaciones').select('*', { count: 'exact', head: true }),
+    supabase.from('conciliaciones').select('*', { count: 'exact', head: true }).eq('confianza', 'ALTA'),
     supabase.from('tenant_users').select('tenants(nombre, rfc_empresa)').eq('activo', true).limit(1).maybeSingle(),
   ])
 

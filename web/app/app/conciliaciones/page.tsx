@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import ConciliacionRow from '@/components/app/ConciliacionRow'
 import { getPlan, PLANES } from '@/lib/plans'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,10 +43,14 @@ export default async function ConciliacionesPage() {
 
   const cfdiMap = new Map((cfdis ?? []).map(c => [c.uuid, c]))
 
-  const conciliadas = cons?.length ?? 0
-  const totalFacturas = totalCfdis ?? 0
-  const pct = totalFacturas > 0 ? Math.round((conciliadas / totalFacturas) * 100) : 0
-  const montoTotal = (cons ?? []).reduce((s, c) => s + Number(c.monto_aplicado), 0)
+  const todasLasConciliaciones = cons ?? []
+  const conciliadasAlta = todasLasConciliaciones.filter(c => c.confianza === 'ALTA').length
+  const enRevision      = todasLasConciliaciones.filter(c => c.confianza === 'BAJA').length
+  const totalFacturas   = totalCfdis ?? 0
+  const pct             = totalFacturas > 0 ? Math.round((conciliadasAlta / totalFacturas) * 100) : 0
+  const montoTotal      = todasLasConciliaciones
+    .filter(c => c.confianza === 'ALTA')
+    .reduce((s, c) => s + Number(c.monto_aplicado), 0)
 
   return (
     <div className="flex flex-col gap-6">
@@ -70,12 +75,21 @@ export default async function ConciliacionesPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-1">
-          <p className="text-xs text-gray-400 uppercase tracking-wider">Facturas conciliadas</p>
-          <p className="text-3xl font-bold text-white">{conciliadas}</p>
-          <p className="text-xs text-gray-500">de {totalFacturas} facturas tipo Ingreso</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wider">Confirmadas</p>
+          <p className="text-3xl font-bold text-green-400">{conciliadasAlta}</p>
+          <p className="text-xs text-gray-500">de {totalFacturas} facturas Ingreso</p>
         </div>
+        <Link href="/app/alertas?f=discrepancias" className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-1 hover:bg-white/10 transition-colors group">
+          <p className="text-xs text-gray-400 uppercase tracking-wider">En revisión</p>
+          <p className={`text-3xl font-bold ${enRevision > 0 ? 'text-yellow-400' : 'text-gray-500'}`}>
+            {enRevision}
+          </p>
+          <p className="text-xs text-yellow-600 group-hover:text-yellow-400 transition-colors">
+            {enRevision > 0 ? 'Ver en Alertas →' : 'Sin discrepancias'}
+          </p>
+        </Link>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-1">
           <p className="text-xs text-gray-400 uppercase tracking-wider">% Conciliación</p>
           <p className={`text-3xl font-bold ${pct >= 80 ? 'text-green-400' : pct >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
@@ -89,15 +103,16 @@ export default async function ConciliacionesPage() {
           </div>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-1">
-          <p className="text-xs text-gray-400 uppercase tracking-wider">Monto conciliado</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wider">Monto confirmado</p>
           <p className="text-3xl font-bold text-white">
             {montoTotal.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 })}
           </p>
+          <p className="text-xs text-gray-500">Solo confianza Alta</p>
         </div>
       </div>
 
-      {/* Tabla */}
-      {conciliadas === 0 ? (
+      {/* Tabla — solo conciliaciones confirmadas (ALTA) */}
+      {todasLasConciliaciones.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center text-gray-500 text-sm">
           Sin conciliaciones. Ejecuta el análisis desde el Dashboard.
         </div>
@@ -118,7 +133,7 @@ export default async function ConciliacionesPage() {
               </tr>
             </thead>
             <tbody>
-              {(cons ?? []).map(c => {
+              {todasLasConciliaciones.filter(c => c.confianza === 'ALTA').map(c => {
                 const cfdi     = cfdiMap.get(c.cfdi_uuid)
                 const tx       = (Array.isArray(c.tx) ? c.tx[0] : c.tx) as { fecha_operacion: string; concepto_bancario: string; clave_rastreo: string; monto: number } | null
                 const cfdiTotal = cfdi ? Number(cfdi.total) : 0
