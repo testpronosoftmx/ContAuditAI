@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
-<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="GASTO" Folio="101" Fecha="2026-05-10T10:00:00" Total="11600.00" SubTotal="10000.00" Moneda="MXN" TipoDeComprobante="I" MetodoPago="PUE" FormaPago="03" LugarExpedicion="64000">
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="F" Folio="101" Fecha="2026-05-10T10:00:00" Total="11600.00" SubTotal="10000.00" Moneda="MXN" TipoDeComprobante="I" MetodoPago="PUE" FormaPago="03" LugarExpedicion="64000">
 	<cfdi:Emisor Rfc="TI010101XYZ" Nombre="PROVEEDOR DE SOFTWARE SA" RegimenFiscal="601" />
-	<cfdi:Receptor Rfc="DEMO123456XYZ" Nombre="EMPRESA DEMO SA DE CV" UsoCFDI="G03" RegimenFiscalReceptor="601" DomicilioFiscalReceptor="10000" />
+	<cfdi:Receptor Rfc="ABCD123456ABC" Nombre="EMPRESA DEMO SA DE CV" UsoCFDI="G03" RegimenFiscalReceptor="601" DomicilioFiscalReceptor="20000" />
 	<cfdi:Conceptos>
 		<cfdi:Concepto ClaveProdServ="43231500" Cantidad="1" ClaveUnidad="E48" Descripcion="Licencia Anual SaaS" ValorUnitario="10000.00" Importe="10000.00" ObjetoImp="02" />
 	</cfdi:Conceptos>

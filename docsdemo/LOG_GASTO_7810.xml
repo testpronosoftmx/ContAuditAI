@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
-<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="GASTO" Folio="303" Fecha="2026-05-15T09:00:00" Total="17400.00" SubTotal="15000.00" Moneda="MXN" TipoDeComprobante="I" MetodoPago="PUE" FormaPago="03" LugarExpedicion="44000">
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="F" Folio="103" Fecha="2026-05-15T09:00:00" Total="17400.00" SubTotal="15000.00" Moneda="MXN" TipoDeComprobante="I" MetodoPago="PUE" FormaPago="03" LugarExpedicion="44000">
 	<cfdi:Emisor Rfc="LOG010101XYZ" Nombre="LOGISTICA NACIONAL SA" RegimenFiscal="601" />
-	<cfdi:Receptor Rfc="DEMO123456XYZ" Nombre="EMPRESA DEMO SA DE CV" UsoCFDI="G03" RegimenFiscalReceptor="601" DomicilioFiscalReceptor="10000" />
+	<cfdi:Receptor Rfc="ABCD123456ABC" Nombre="EMPRESA DEMO SA DE CV" UsoCFDI="G03" RegimenFiscalReceptor="601" DomicilioFiscalReceptor="20000" />
 	<cfdi:Conceptos>
 		<cfdi:Concepto ClaveProdServ="78101802" Cantidad="1" ClaveUnidad="E48" Descripcion="Servicio de Flete y Distribución" ValorUnitario="15000.00" Importe="15000.00" ObjetoImp="02" />
 	</cfdi:Conceptos>
