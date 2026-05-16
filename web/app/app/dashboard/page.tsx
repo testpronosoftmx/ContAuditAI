@@ -95,7 +95,11 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-sm text-gray-400 mt-1">
-            {tenant ? `${tenant.nombre} · ${tenant.rfc_empresa}` : 'Cargando...'}
+            {tenant
+            ? tenant.nombre !== tenant.rfc_empresa
+              ? `${tenant.nombre} · ${tenant.rfc_empresa}`
+              : tenant.nombre
+            : 'Cargando...'}
           </p>
         </div>
         <AnalisisBtn />
