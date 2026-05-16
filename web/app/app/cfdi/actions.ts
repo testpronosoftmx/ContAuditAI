@@ -17,6 +17,7 @@ type CfdiRow = {
   concepto: string
   isr_retenido: string
   iva_retenido: string
+  clave_prod_serv: string
 }
 
 type CrpRow = {
@@ -51,15 +52,17 @@ function parseCFDI(xml: string): { cfdi: CfdiRow; crp?: Omit<CrpRow, 'tenant_id'
     const iva      = attr(xml, 'TotalImpuestosTrasladados') || '0'
     const isrRet   = attr(xml, 'TotalImpuestosRetenidos') || '0'
 
-    const emisorMatch    = xml.match(/<cfdi:Emisor[^>]*Rfc="([^"]+)"/i)
-    const receptorMatch  = xml.match(/<cfdi:Receptor[^>]*Rfc="([^"]+)"/i)
-    const conceptoMatch  = xml.match(/<cfdi:Concepto[^>]*Descripcion="([^"]+)"/i)
-    const ivaRetMatch    = xml.match(/<cfdi:Retencion[^>]*Impuesto="002"[^>]*Importe="([^"]+)"/i)
+    const emisorMatch       = xml.match(/<cfdi:Emisor[^>]*Rfc="([^"]+)"/i)
+    const receptorMatch     = xml.match(/<cfdi:Receptor[^>]*Rfc="([^"]+)"/i)
+    const conceptoMatch     = xml.match(/<cfdi:Concepto[^>]*Descripcion="([^"]+)"/i)
+    const claveProdServMatch = xml.match(/<cfdi:Concepto[^>]*ClaveProdServ="([^"]+)"/i)
+    const ivaRetMatch       = xml.match(/<cfdi:Retencion[^>]*Impuesto="002"[^>]*Importe="([^"]+)"/i)
 
-    const rfcEmisor   = emisorMatch?.[1]   ?? ''
-    const rfcReceptor = receptorMatch?.[1] ?? ''
-    const concepto    = conceptoMatch?.[1] ?? ''
-    const ivaRetenido = ivaRetMatch?.[1]   ?? '0'
+    const rfcEmisor    = emisorMatch?.[1]        ?? ''
+    const rfcReceptor  = receptorMatch?.[1]      ?? ''
+    const concepto     = conceptoMatch?.[1]      ?? ''
+    const claveProdServ = claveProdServMatch?.[1] ?? ''
+    const ivaRetenido  = ivaRetMatch?.[1]        ?? '0'
 
     if (!uuid || !fecha || !tipo || !rfcEmisor || !rfcReceptor) return null
 
@@ -68,6 +71,7 @@ function parseCFDI(xml: string): { cfdi: CfdiRow; crp?: Omit<CrpRow, 'tenant_id'
       fecha_emision: fecha, tipo_comprobante: tipo,
       metodo_pago: metodo, subtotal, iva, total,
       concepto, isr_retenido: isrRet, iva_retenido: ivaRetenido,
+      clave_prod_serv: claveProdServ,
     }
 
     // Para tipo P: extraer UUID de la factura relacionada via cfdi:CfdiRelacionado

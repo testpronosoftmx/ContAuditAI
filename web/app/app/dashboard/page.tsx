@@ -6,6 +6,7 @@ import CfdiMensualChart from '@/components/app/CfdiMensualChart'
 import TopProveedoresWidget from '@/components/app/TopProveedoresWidget'
 import MaterialidadWidget from '@/components/app/MaterialidadWidget'
 import DeducibilidadWidget from '@/components/app/DeducibilidadWidget'
+import GastoCategoriasWidget, { DIVISIONES } from '@/components/app/GastoCategoriasWidget'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -55,7 +56,7 @@ export default async function DashboardPage() {
     supabase.from('alertas_riesgo').select('id, tipo_alerta, severidad, descripcion').eq('estado', 'Pendiente').order('created_at', { ascending: false }).limit(20),
     supabase.from('cfdi_comprobantes').select('*', { count: 'exact', head: true }),
     supabase.from('transacciones_bancarias').select('*', { count: 'exact', head: true }),
-    supabase.from('cfdi_comprobantes').select('uuid, tipo_comprobante, total, fecha_emision, rfc_emisor, metodo_pago'),
+    supabase.from('cfdi_comprobantes').select('uuid, tipo_comprobante, total, fecha_emision, rfc_emisor, metodo_pago, clave_prod_serv'),
     supabase.from('conciliaciones').select('*', { count: 'exact', head: true }).eq('confianza', 'ALTA'),
     supabase.from('tenant_users').select('tenants(nombre, rfc_empresa)').eq('activo', true).limit(1).maybeSingle(),
     supabase.from('alertas_riesgo').select('uuid_referencia').eq('tipo_alerta', 'EFOS_DETECTADO').eq('estado', 'Pendiente'),
@@ -106,6 +107,19 @@ export default async function DashboardPage() {
       deducibilidad.ppdConCrp.count++; deducibilidad.ppdConCrp.monto += monto
     }
   }
+
+  // ── Widget 4: Distribución por categoría de gasto (Sprint B) ─
+  const catMap = new Map<string, { total: number; facturas: number }>()
+  for (const c of cfdiRaw ?? []) {
+    if (c.tipo_comprobante !== 'I' || c.rfc_emisor === tenantRfc || !c.clave_prod_serv) continue
+    const div  = (c.clave_prod_serv as string).substring(0, 2)
+    const prev = catMap.get(div) ?? { total: 0, facturas: 0 }
+    catMap.set(div, { total: prev.total + (Number(c.total) || 0), facturas: prev.facturas + 1 })
+  }
+  const gastosCategorias = Array.from(catMap.entries())
+    .map(([division, v]) => ({ division, nombre: DIVISIONES[division] ?? `División ${division}`, ...v }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 7)
 
   const tipoMap    = new Map<string, { count: number; monto: number }>()
   const mensualMap = new Map<string, { ingreso: number; egreso: number }>()
@@ -301,6 +315,13 @@ export default async function DashboardPage() {
               ppdConCrp={deducibilidad.ppdConCrp}
               ppdSinCrp={deducibilidad.ppdSinCrp}
             />
+          </div>
+          <div className="lg:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
+            <div>
+              <h2 className="font-semibold text-sm">Distribución por Categoría de Gasto</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Egresos agrupados por División SAT (ClaveProdServ) · Art. 27 LISR</p>
+            </div>
+            <GastoCategoriasWidget data={gastosCategorias} />
           </div>
         </div>
       )}
