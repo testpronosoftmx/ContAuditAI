@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 
 const alertDetails = [
   {
@@ -128,8 +128,6 @@ function SevBadge({ sev }: { sev: string }) {
 }
 
 export default function AyudaPage() {
-  const [activeTab, setActiveTab] = useState('alertas')
-
   return (
     <div className="max-w-6xl mx-auto">
       <header className="mb-10">

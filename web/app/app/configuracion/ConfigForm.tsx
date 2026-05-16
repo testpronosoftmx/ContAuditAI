@@ -36,7 +36,7 @@ export default function ConfigForm({ defaults }: Props) {
             Alértame discrepancias mayores a
           </label>
           <p className="text-xs text-gray-500">
-            Diferencia entre monto facturado y cobrado para marcarla como "Retención posible". Debajo de este umbral se ignora (centavos de redondeo).
+            Diferencia entre monto facturado y cobrado para marcarla como &quot;Retención posible&quot;. Debajo de este umbral se ignora (centavos de redondeo).
           </p>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-gray-400 text-sm">$</span>
@@ -62,7 +62,7 @@ export default function ConfigForm({ defaults }: Props) {
             Considerar factura vencida a los
           </label>
           <p className="text-xs text-gray-500">
-            Días sin cobro para escalar de "Sin pago reciente" (HUÉRFANO) a "Factura vencida" (VENCIDA). Ajusta según tus términos de crédito habituales.
+            Días sin cobro para escalar de &quot;Sin pago reciente&quot; (HUÉRFANO) a &quot;Factura vencida&quot; (VENCIDA). Ajusta según tus términos de crédito habituales.
           </p>
           <div className="flex items-center gap-2 mt-1">
             <input
