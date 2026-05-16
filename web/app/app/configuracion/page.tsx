@@ -36,7 +36,10 @@ export default async function ConfiguracionPage() {
         </p>
       </div>
 
-      <ConfigForm defaults={defaults} />
+      <ConfigForm
+        key={`${defaults.discrepancia_minima}-${defaults.dias_factura_vencida}-${defaults.monto_materialidad}`}
+        defaults={defaults}
+      />
 
       <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-gray-500 space-y-1">
         <p className="text-gray-400 font-medium mb-2">Parámetros no configurables (obligaciones SAT)</p>
