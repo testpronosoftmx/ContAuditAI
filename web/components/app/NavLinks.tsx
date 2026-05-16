@@ -10,6 +10,7 @@ const navLinks = [
   { href: '/app/conciliaciones',  label: 'Conciliaciones' },
   { href: '/app/alertas',         label: 'Alertas'        },
   { href: '/app/vault',           label: 'Evidencias'     },
+  { href: '/app/configuracion',   label: 'Configuración'  },
   { href: '/app/ayuda',           label: 'Ayuda'          },
 ]
 
